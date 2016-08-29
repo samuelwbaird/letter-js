@@ -1,0 +1,45 @@
+<html>
+	<!--
+		A sample housing showing an app launch being kicked off as part of loading the body
+		after the HTML header loads the letter.js bootstrap
+	-->
+	<head>
+		<title>Letter JS Example</title>
+		<script src="js/letter.js"></script>
+		<style>
+		body, html { height : 100%; }
+		body { overflow: hidden; }
+		</style>
+		
+	</head>
+	<body>
+		<script>
+		// main canvas
+		var canvas = document.createElement("canvas");
+		canvas.width = window.innerWidth;
+		canvas.height = window.innerHeight;
+		canvas.imageSmoothingEnabled = false;
+		document.body.appendChild(canvas);
+		
+		// always resize to fit
+		window.addEventListener('resize', function () {
+			canvas.width = window.innerWidth;
+			canvas.height = window.innerHeight;
+		}, false);
+
+		// launch app with nominal sizing
+		require(['letter.app', 'example.loading_scene'], function (app, loading_scene) {
+			window.app = app.launch(canvas, new loading_scene(), 320, 480)
+		});
+				
+		// prevent scrolling on arrow keys
+		window.addEventListener("keydown", function(e) {
+		    // space, page up, page down and arrow keys:
+		    if([32, 33, 34, 37, 38, 39, 40].indexOf(e.keyCode) > -1) {
+		        e.preventDefault();
+		    }
+		}, false);		
+		</script>
+		
+	</body>
+</html>
