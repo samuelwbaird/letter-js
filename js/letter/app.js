@@ -142,8 +142,6 @@ define(['letter.geometry', 'letter.dispatch', 'letter.display_list', 'letter.eve
 		}) ();
 	
 		var _active = false;
-		var _count = 0;
-	
 		timer.start = function (callback) {
 			_active = true;
 		
@@ -151,9 +149,7 @@ define(['letter.geometry', 'letter.dispatch', 'letter.display_list', 'letter.eve
 				if (!_active) {
 					return;
 				}
-				if (++_count < 60 * 10) {
-					requestAnimFrame(next_frame);
-				}
+				requestAnimFrame(next_frame);
 				// try {
 					callback();
 				// } catch (exception) {
