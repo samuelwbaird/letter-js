@@ -85,11 +85,12 @@ define(['letter.geometry', 'letter.dispatch', 'letter.display_list', 'letter.eve
 	});
 	
 	var screen = klass(function (screen) {
-		screen.init = function (canvas, nominal_width, nominal_height) {
+		screen.init = function (canvas, nominal_width, nominal_height, fit) {
 			this.canvas = canvas;
 			this.ctx = canvas.getContext("2d");
 			this.nominal_height = nominal_height;
 			this.nominal_width = nominal_width;
+			this.fit = fit;
 			this.root_view = new display_list.display_list();
 			
 			this.update();
@@ -122,8 +123,19 @@ define(['letter.geometry', 'letter.dispatch', 'letter.display_list', 'letter.eve
 		}
 		
 		screen.render = function () {
+			// update scaling to fit nominal sizing to canvas size
+			var scale_x = this.canvas.width / this.nominal_width;
+			var scale_y = this.canvas.height / this.nominal_height;
+			var scale = 1;
+			
+			if (this.fit == 'fit') {
+				scale = (scale_x < scale_y) ? scale_x : scale_y;
+			} else {
+				// other screenfit strategies
+			}
+
 			this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-			this.root_view.render(this.ctx, geometry.default_transform());
+			this.root_view.render(this.ctx, geometry.transform(0, 0, scale, scale, 0, 1));
 		}
 		
 	});
@@ -169,9 +181,9 @@ define(['letter.geometry', 'letter.dispatch', 'letter.display_list', 'letter.eve
 	// exported module
 	return {
 	
-		launch : function (canvas, scene, width, height) {
+		launch : function (canvas, scene, width, height, fit) {
 			console.log('app launch');
-			var _screen = new screen(canvas, width, height);
+			var _screen = new screen(canvas, width, height, fit);
 			var _timer = new timer();
 			
 			var _app = new app(_screen, _timer);
