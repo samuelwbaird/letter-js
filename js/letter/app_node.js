@@ -102,7 +102,7 @@ define(['letter.dispatch', 'letter.display_list', 'letter.tween', 'letter.touch_
 				this.frame_dispatch.update();
 			}
 			if (this.children) {
-				children.update(function (child) {
+				this.children.update(function (child) {
 					child.update();
 				})
 			}
