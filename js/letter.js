@@ -130,10 +130,6 @@ global.update_list = klass(function (update_list) {
 	}
 	
 	update_list.add = function (obj, tag) {
-		if (this.is_iterating) {
-			throw "add during update/iteration";
-		}
-
 		this.list.push({
 			obj : obj,
 			tag : tag
@@ -177,10 +173,12 @@ global.update_list = klass(function (update_list) {
 		}
 		this.is_iterating = true;
 		var i = 0;
-		while (i < this.list.length) {
+		var length = this.list.length;
+		while (i < length) {
 			var entry = this.list[i];
 			if (update_function(entry.obj) === true) {
 				this.list.splice(i, 1);
+				length--;
 			} else {
 				i++;
 			}
