@@ -4,7 +4,7 @@
 
 define([], function () {
 	// internal functions
-	var query = function (method, url, data, successHandler, errorHandler) {
+	var query = function (method, url, data, successHandler, errorHandler, timeout) {
 		var xhr = typeof XMLHttpRequest != 'undefined' ? new XMLHttpRequest() : new ActiveXObject('Microsoft.XMLHTTP');
 
 		xhr.open(method, url, true);
@@ -14,13 +14,18 @@ define([], function () {
 			if (xhr.readyState == 4) { // `DONE`
 				status = xhr.status;
 				if (status == 200) {
-					data = JSON.parse(xhr.responseText);
+					if (xhr.responseText != '') {
+						data = JSON.parse(xhr.responseText);
+					}
 					successHandler && successHandler(data);
 				} else {
 					errorHandler && errorHandler(status);
 				}
 			}
 		};
+		if (timeout != undefined) {
+			xhr.timeout = timeout;
+		}
 
 		if (data != null) {
 			xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
