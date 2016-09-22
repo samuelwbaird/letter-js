@@ -32,6 +32,10 @@ define(['letter.dispatch', 'letter.display_list', 'letter.tween', 'letter.touch_
 				this.children = new update_list();
 			}
 			this.children.add(child);
+			
+			child.app = this.app
+			child.resources = this.resources
+			child.screen = this.screen
 			child.prepare();
 		
 			// view_parent = false to not add, or this nodes view by default
