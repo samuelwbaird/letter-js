@@ -136,7 +136,7 @@ global.update_list = klass(function (update_list) {
 		})
 	}
 	
-	update_list.remove = function (tag) {
+	update_list.remove = function (obj_or_tag) {
 		if (this.is_iterating) {
 			throw "remove during update/iteration";
 		}
@@ -145,7 +145,7 @@ global.update_list = klass(function (update_list) {
 		var i = 0;
 		while (i < this.list.length) {
 			var entry = this.list[i];
-			if (entry.tag == tag) {
+			if (entry.obj == obj_or_tag || entry.tag == obj_or_tag) {
 				this.list.splice(i, 1);
 				did_remove = true;
 			} else {
