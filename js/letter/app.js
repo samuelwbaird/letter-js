@@ -135,7 +135,9 @@ define(['letter.geometry', 'letter.dispatch', 'letter.display_list', 'letter.eve
 			}
 
 			this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-			this.root_view.render(this.ctx, geometry.transform(0, 0, scale, scale, 0, 1));
+			this.root_view.scale_x = scale;
+			this.root_view.scale_y = scale;
+			this.root_view.render(this.ctx, geometry.default_transform()); 
 		}
 		
 	});

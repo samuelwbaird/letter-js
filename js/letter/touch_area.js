@@ -152,7 +152,9 @@ define(['letter.event_dispatch', 'letter.geometry'], function (event_dispatch, g
 	touch_area.rect = function (display_object, rect, selected_event_dispatch) {
 		return new touch_area(
 			// point conversion
-			function (point) { return display_object.world_to_local(point); },
+			function (point) { 
+				return display_object.world_to_local(point);
+			},
 			// area test
 			function (point) {
 				return geometry.rect_contains_point(rect, point);

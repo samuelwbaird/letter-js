@@ -2,7 +2,7 @@
 // standard heavy weight object used to create a back bone heirachy of objects at runtime
 // copyright 2016 Samuel Baird MIT Licence
 
-define(['letter.dispatch', 'letter.display_list', 'letter.tween', 'letter.touch_area', 'letter.button'], function (dispatch, display_list, tween, touch_area, button) {
+define(['letter.dispatch', 'letter.display_list', 'letter.tween', 'letter.touch_area', 'letter.button', 'letter.geometry'], function (dispatch, display_list, tween, touch_area, button, geometry) {
 	return klass(function (app_node) {
 				
 		app_node.init = function () {
@@ -93,7 +93,7 @@ define(['letter.dispatch', 'letter.display_list', 'letter.tween', 'letter.touch_
 		}
 		
 		app_node.add_touch_area_rect = function (display_object, x, y, width, height, event_dispatch) {
-			var ta = touch_area.rect(display_object, x, y, width, height, event_dispatch);
+			var ta = touch_area.rect(display_object, geometry.rect(x, y, width, height), event_dispatch);
 			this.add_disposable(ta);
 			return ta;
 		}

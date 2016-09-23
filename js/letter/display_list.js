@@ -101,7 +101,7 @@ define(['letter.geometry', 'letter.resources'], function (geometry, resources) {
 		
 		display_list.world_transform = function () {
 			if (this.parent) {
-				return geometry.transform_transform(this.parent, this)
+				return geometry.transform_transform(this.parent.world_transform(), this);
 			} else {
 				return this;
 			}

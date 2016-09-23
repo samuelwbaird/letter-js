@@ -84,7 +84,7 @@ define([], function () {
 	var event_handler = klass(function (event_handler) {
 		
 		event_handler.init = function (dispatch) {
-			this.event_dispatch = (dispatch ? dispatch : shared[shared.length - 1]);
+			this.event_dispatch = (dispatch != null ? dispatch : shared[shared.length - 1]);
 			this.did_listen = false;
 		}
 		
