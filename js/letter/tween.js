@@ -1,4 +1,6 @@
 'use strict';
+var global = window
+
 // a basic tween system, assumes fixed framerate and tween easing is defined as a sequence
 // of numbers from 0 to 1 over that number of frames
 // copyright 2016 Samuel Baird MIT Licence
@@ -126,6 +128,10 @@ define([], function () {
 		
 		manager.update = function () {
 			this.tweens.update(update_func);
+		}
+		
+		manager.safe_update = function () {
+			this.tweens.safe_update(update_func);
 		}
 		
 		manager.clear = function () {

@@ -1,4 +1,6 @@
 'use strict';
+var global = window
+
 // an object to manage dispatch of events on integer frame numbers
 // copyright 2016 Samuel Baird MIT Licence
 
@@ -60,6 +62,10 @@ define([], function () {
 			this.update_list.update(update_function);
 		}
 		
+		frame_dispatch.safe_update = function () {
+			this.update_list.safe_update(update_function);
+		}
+		
 		// proxy through some methods from the update_list
 		frame_dispatch.clear = function () {
 			this.update_list.clear()
@@ -72,6 +78,8 @@ define([], function () {
 		frame_dispatch.remove = function (tag_or_fn) {
 			this.update_list.remove(tag_or_fn)
 		}
+		
+		frame_dispatch.dispose = frame_dispatch.clear;
 		
 	});
 	

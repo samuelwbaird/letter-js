@@ -1,4 +1,5 @@
 'use strict';
+var global = window
 // standard heavy weight object used to create a back bone heirachy of objects at runtime
 // copyright 2016 Samuel Baird MIT Licence
 
@@ -99,16 +100,30 @@ define(['letter.dispatch', 'letter.display_list', 'letter.tween', 'letter.touch_
 		}
 		
 		app_node.update = function () {
-			if (this.tween_manager) {
-				this.tween_manager.update();
-			}
-			if (this.frame_dispatch) {
-				this.frame_dispatch.update();
-			}
-			if (this.children) {
-				this.children.update(function (child) {
-					child.update();
-				})
+			if (global.safe_updates) {
+				if (this.tween_manager) {
+					this.tween_manager.safe_update();
+				}
+				if (this.frame_dispatch) {
+					this.frame_dispatch.safe_update();
+				}
+				if (this.children) {
+					this.children.safe_update(function (child) {
+						child.update();
+					})
+				}
+			} else {
+				if (this.tween_manager) {
+					this.tween_manager.update();
+				}
+				if (this.frame_dispatch) {
+					this.frame_dispatch.update();
+				}
+				if (this.children) {
+					this.children.update(function (child) {
+						child.update();
+					})
+				}
 			}
 		}
 		

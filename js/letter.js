@@ -5,6 +5,8 @@
 
 // going to be placing some stuff into global namespace
 var global = window
+global.production_mode = false;
+global.safe_updates = true;
 
 // -- allow arbitrary objects to be tagged with a property that can be used as a string key for dicts ------
 // associate a unique string tag with an object to use as a key in obj-> refs
@@ -184,6 +186,32 @@ global.update_list = klass(function (update_list) {
 			}
 		}
 		this.is_iterating = false;
+	}
+	
+	update_list.safe_update = function (update_function) {
+		// update based on a copy of the list, exception handling around each update
+		var copy = this.list.concat();
+		var matching_index = 0;
+		var length = copy.length;
+		for (var i = 0; i < copy.length; i++) {
+			var entry = copy[i];
+			if (global.production_mode) {
+				try {
+					if (update_function(entry.obj) === true) {
+						this.list.splice(matching_index, 1);
+						matching_index--;
+					}
+				} catch (exception) {
+					console.log(exception);
+				}
+			} else {
+				if (update_function(entry.obj) === true) {
+					this.list.splice(matching_index, 1);
+					matching_index--;
+				}
+			}
+			matching_index++;
+		}
 	}
 	
 });
