@@ -1,4 +1,6 @@
 'use strict';
+var global = window
+
 // an event system in 3 parts, an event server (event_dispatch), an event client (event_handler)
 // and some methods to share a static reference to a global default event dispatcher
 // used to defer touch events and dispatch them at a predictable moment during the frame cycle
@@ -26,13 +28,13 @@ define([], function () {
 		event_dispatch.remove_listener = function (tag, event_name) {
 			if (event_name == undefined) {
 				for (name in this.events) {
-					this.remove_listener(name);
+					this.remove_listener(tag, name);
 				}
 				return;
 			}
 			
 			var listeners = this.events[event_name];
-			if (listeners && listeners.length > 0) {
+			if (listeners && listeners.constructor === Array && listeners.length > 0) {
 				var i = listeners.length;
 				while (--i >= 0) {
 					var listener = listeners[i];
@@ -51,7 +53,7 @@ define([], function () {
 			var listeners = this.events[event_name];
 			if (listeners && listeners.length > 0) {
 				// clone and iterate the cloned array to 
-				var clone = listeners.slice();
+				var clone = listeners.concat();
 				for (var i = 0; i < clone.length; i++) {
 					var listener = clone[i];
 					if (listener.action) {
