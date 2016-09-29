@@ -155,28 +155,43 @@ define(['letter.geometry', 'letter.dispatch', 'letter.display_list', 'letter.eve
 		        };
 		}) ();
 	
-		var _active = false;
-		timer.start = function (callback) {
-			_active = true;
+		var get_time = function () { return Date.now(); }
+	
+		timer.init = function () {
+			this.active = false;
+			this.fps = 60;
+			this.minimum_delay = (1000.0 / this.fps) - 3;
+			this.last_frame = 0;
+		}
 		
+		timer.start = function (callback) {
+			this.active = true;
+		
+			var self = this;
 			var next_frame = function () {
-				if (!_active) {
+				if (!self.active) {
 					return;
 				}
 				requestAnimFrame(next_frame);
-				// try {
+				var now = get_time();
+				if (now - self.last_frame < self.minimum_delay) {
+					// skip it
+				} else {
+					self.last_frame = now;
 					callback();
-				// } catch (exception) {
-				// 	// stop timer on error (maybe debug only)
-				// 	_active = false;
-				// }
+				}
 			}
 
 			requestAnimFrame(next_frame);
 		}
 		
 		timer.stop = function () {
-			_active = false;
+			this.active = false;
+		}
+		
+		timer.set_frame_rate = function (fps) {
+			this.fps = fps;
+			this.minimum_delay = (1000.0 / fps) - 3;
 		}
 	});
 
