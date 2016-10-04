@@ -69,7 +69,7 @@ define(['letter.geometry', 'letter.dispatch', 'letter.display_list', 'letter.eve
 				var frames = 1;
 				if (this.last_time != null) {
 					var delta = (now - this.last_time);
-					if (delta > (1.0 / this.fps) * 1.25) {
+					if (delta > (1000.0 / this.fps) * 1.25) {
 						frames = 2;
 					}
 				}

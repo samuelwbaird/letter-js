@@ -431,9 +431,9 @@ define(['letter.geometry', 'letter.resources'], function (geometry, resources) {
 			}
 			
 			this.playback_position += this.playback_speed;
-			if (this.playback_position > this.end_frame) {
+			if (Math.floor(this.playback_position) > this.end_frame) {
 				if (this.loop) {
-					while (this.playback_position >= this.end_frame) {
+					while (Math.floor(this.playback_position) > this.end_frame) {
 						this.playback_position -= (this.end_frame - this.start_frame) + 1;
 					}
 				} else {
