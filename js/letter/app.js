@@ -9,6 +9,7 @@ define(['letter.geometry', 'letter.dispatch', 'letter.display_list', 'letter.eve
 		app.init = function (screen, timer) {
 			this.screen = screen;
 			this.timer = timer;
+			this.fps = timer.fps;
 			this.resources = resources;
 
 			this.dispatch = new dispatch.frame_dispatch();
@@ -56,7 +57,7 @@ define(['letter.geometry', 'letter.dispatch', 'letter.display_list', 'letter.eve
 			
 			// update animation heirachy and fire off on-complete events once done
 			var on_completes = [];
-			this.screen.root_view.update_animated_clips(1.0/60.0, function (callback) { on_completes.push(callback); });
+			this.screen.root_view.update_animated_clips(1.0 / this.fps, function (callback) { on_completes.push(callback); });
 			on_completes.with_each(function (callback) {
 				callback();
 			});
@@ -64,20 +65,27 @@ define(['letter.geometry', 'letter.dispatch', 'letter.display_list', 'letter.eve
 			event_dispatch.shared_instance().dispatch_deferred();
 			this.dispatch.update();
 			
-			if (this.current_scene) {
+			if (this.current_scene != null) {
 				var frames = 1;
 				if (this.last_time != null) {
 					var delta = (now - this.last_time);
-					if (delta > 20) {
+					if (delta > (1.0 / this.fps) * 1.25) {
 						frames = 2;
 					}
 				}
 				for (var f = 0; f < frames; f++) {
-					this.current_scene.update();
+					if (this.current_scene != null) {
+						this.current_scene.update();
+					}
 				}
 				this.screen.render();
 			}
 			this.last_time = now;
+		}
+		
+		app.set_frame_rate = function (fps) {
+			this.timer.set_frame_rate(fps);
+			this.fps = fps;
 		}
 		
 		app.pause = function () { this.timer.stop(); }
