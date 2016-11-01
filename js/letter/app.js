@@ -63,7 +63,11 @@ define(['letter.geometry', 'letter.dispatch', 'letter.display_list', 'letter.eve
 			});
 			
 			event_dispatch.shared_instance().dispatch_deferred();
-			this.dispatch.update();
+			if (global.safe_updates) {
+				this.dispatch.safe_update();
+			} else {
+				this.dispatch.update();
+			}
 			
 			if (this.current_scene != null) {
 				var frames = 1;
