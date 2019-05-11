@@ -7,7 +7,6 @@ define(['letter.dispatch', 'letter.display_list', 'letter.tween', 'letter.touch_
 	return klass(function (app_node) {
 				
 		app_node.init = function () {
-			this.dispatch = new dispatch.frame_dispatch();
 			this.view = new display_list.display_list();
 			
 			this.tween_manager = null;
@@ -45,9 +44,9 @@ define(['letter.dispatch', 'letter.display_list', 'letter.tween', 'letter.touch_
 			}
 			if (view_parent) {
 				view_parent.add(child.view);
-				// begin is called only once the view is added
-				child.begin();
 			}
+			// begin is called only once the view is added
+			child.begin();
 
 			return child;
 		}
@@ -79,6 +78,10 @@ define(['letter.dispatch', 'letter.display_list', 'letter.tween', 'letter.touch_
 				this.frame_dispatch = new dispatch.frame_dispatch();
 			}
 			return this.frame_dispatch;
+		}
+		
+		app_node.delay = function (count, fn, tag) {
+			this.get_frame_dispatch().delay(count, fn, tag);
 		}
 		
 		app_node.add_button = function (clip, action, event_dispatch) {
