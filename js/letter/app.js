@@ -46,21 +46,25 @@ define(['letter.geometry', 'letter.dispatch', 'letter.display_list', 'letter.eve
 				this.current_scene.screen = this.screen
 				
 				this.current_scene.prepare();
-				this.screen.root_view.add(scene.view);
+				if (this.screen != null) {
+					this.screen.root_view.add(scene.view);
+				}
 				this.current_scene.begin();
 			}
 		}
 		
 		app.update = function () {
 			var now = Date.now();	
-			this.screen.update();
+			if (this.screen != null) {
+				this.screen.update();
 			
-			// update animation heirachy and fire off on-complete events once done
-			var on_completes = [];
-			this.screen.root_view.update_animated_clips(1.0 / this.fps, function (callback) { on_completes.push(callback); });
-			on_completes.with_each(function (callback) {
-				callback();
-			});
+				// update animation heirachy and fire off on-complete events once done
+				var on_completes = [];
+				this.screen.root_view.update_animated_clips(1.0 / this.fps, function (callback) { on_completes.push(callback); });
+				on_completes.with_each(function (callback) {
+					callback();
+				});
+			}
 			
 			event_dispatch.shared_instance().dispatch_deferred();
 			if (global.safe_updates) {
@@ -82,7 +86,9 @@ define(['letter.geometry', 'letter.dispatch', 'letter.display_list', 'letter.eve
 						this.current_scene.update();
 					}
 				}
-				this.screen.render();
+				if (this.screen != null) {
+					this.screen.render();
+				}
 			}
 			this.last_time = now;
 		}
@@ -212,9 +218,9 @@ define(['letter.geometry', 'letter.dispatch', 'letter.display_list', 'letter.eve
 	
 		launch : function (canvas, scene, width, height, fit) {
 			console.log('app launch');
-			var _screen = new screen(canvas, width, height, fit);
+			var _screen = (canvas != null) ? new screen(canvas, width, height, fit) : null;
+
 			var _timer = new timer();
-			
 			var _app = new app(_screen, _timer);
 
 			window.app = _app;
