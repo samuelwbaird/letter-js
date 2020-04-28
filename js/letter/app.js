@@ -103,11 +103,11 @@ define(['letter.geometry', 'letter.dispatch', 'letter.display_list', 'letter.eve
 	});
 	
 	var screen = klass(function (screen) {
-		screen.init = function (canvas, nominal_width, nominal_height, fit) {
+		screen.init = function (canvas, ideal_width, ideal_height, fit) {
 			this.canvas = canvas;
 			this.ctx = canvas.getContext("2d");
-			this.nominal_height = nominal_height;
-			this.nominal_width = nominal_width;
+			this.ideal_height = ideal_height;
+			this.ideal_width = ideal_width;
 			this.fit = fit;
 			this.root_view = new display_list.display_list();
 			
@@ -138,12 +138,10 @@ define(['letter.geometry', 'letter.dispatch', 'letter.display_list', 'letter.eve
 		
 		screen.update = function () {
 			// update transform of root view to match sizing
-		}
-		
-		screen.render = function () {
+
 			// update scaling to fit nominal sizing to canvas size
-			var scale_x = this.canvas.width / this.nominal_width;
-			var scale_y = this.canvas.height / this.nominal_height;
+			var scale_x = this.canvas.width / this.ideal_width;
+			var scale_y = this.canvas.height / this.ideal_height;
 			var scale = 1;
 			
 			if (this.fit == 'fit') {
@@ -151,10 +149,16 @@ define(['letter.geometry', 'letter.dispatch', 'letter.display_list', 'letter.eve
 			} else {
 				// other screenfit strategies
 			}
-
-			this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+			
+			this.width = this.canvas.width / scale;
+			this.height = this.canvas.height / scale;
+			
 			this.root_view.scale_x = scale;
 			this.root_view.scale_y = scale;
+		}
+		
+		screen.render = function () {
+			this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 			this.root_view.render(this.ctx, geometry.default_transform()); 
 		}
 		
