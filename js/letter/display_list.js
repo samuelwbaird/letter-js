@@ -158,7 +158,7 @@ define(['letter.geometry', 'letter.resources'], function (geometry, resources) {
 				var out = null;
 				var ref = reference.world_transform()
 				for (var j = 0; j < 4; j++) {
-					rect = geometry.rect_expand_to_include_point(rect, ref.untransform_point(points[j]));
+					rect = geometry.rect_expand_to_include_point(rect, geometry.untransform_point(ref, points[j]));
 				}
 				return rect;
 			}
