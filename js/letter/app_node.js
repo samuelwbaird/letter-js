@@ -84,8 +84,8 @@ define(['letter.dispatch', 'letter.display_list', 'letter.tween', 'letter.touch_
 			this.get_frame_dispatch().delay(count, fn, tag);
 		}
 		
-		app_node.add_button = function (clip, action, event_dispatch) {
-			var btn = new button(clip, action, event_dispatch);
+		app_node.add_button = function (clip, action, event_dispatch, init_values) {
+			var btn = new button(clip, action, event_dispatch, init_values);
 			this.add_disposable(btn);
 			return btn;
 		}
