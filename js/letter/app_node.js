@@ -67,8 +67,8 @@ define(['letter.dispatch', 'letter.display_list', 'letter.tween', 'letter.touch_
 			return this.tween_manager;
 		}
 		
-		app_node.tween = function (target, easing, properties, on_complete) {
-			var t = new tween.tween(target, easing, properties, on_complete)
+		app_node.tween = function (target, easing, properties, optional_params) {
+			var t = new tween.tween(target, easing, properties, optional_params)
 			this.get_tween_manager().add(t);
 			return t;
 		}

@@ -71,10 +71,16 @@ define([], function () {
 	});
 	
 	var tween = klass(function (tween) {
-		tween.init = function (target, easing, properties, on_complete) {
+		tween.init = function (target, easing, properties, optional_params) {
 			this.target = target
 			this.easing = easing
-			this.on_complete = on_complete
+			// backwards compatibility, if optional_params is a function, it is the on_complete
+			if (typeof optional_params == 'function') {
+				this.on_complete = optional_params
+			} else if (optional_params) {
+				this.on_complete = optional_params.on_complete
+				this.delay = optional_params.delay				
+			}
 		
 			// gather start and end values for all tweened properties
 			this.properties = {}
@@ -86,6 +92,11 @@ define([], function () {
 		}
 	
 		tween.update = function () {
+			if (this.delay && this.delay > 0) {
+				this.delay--;
+				return false;
+			}
+			
 			if (this.frame < this.easing.length) {
 				var ratio = this.easing[this.frame++];
 				var inverse = 1 - ratio;
