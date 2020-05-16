@@ -126,13 +126,18 @@ define(['letter.geometry', 'letter.dispatch', 'letter.display_list', 'letter.eve
 	
 		screen.touch_event = function (event_name, evt) {
 			evt.preventDefault();
+			
+			// correct co-ords for hdpi displays
+			var scale_x = canvas.width / canvas.clientWidth;
+			var scale_y = canvas.height / canvas.clientHeight;
+			
 			if (evt.changedTouches) {
 				for (var i = 0; i < evt.changedTouches.length; i++) {
 					var touch = evt.changedTouches[i];
-					event_dispatch.shared_instance().defer(event_name, { id : touch.identifier, time : Date.now, x : touch.pageX - canvas.offsetLeft, y : touch.pageY - canvas.offsetTop });
+					event_dispatch.shared_instance().defer(event_name, { id : touch.identifier, time : Date.now, x : (touch.pageX - canvas.offsetLeft) * scale_x, y : (touch.pageY - canvas.offsetTop) * scale_y });
 				}
 			} else {
-				event_dispatch.shared_instance().defer(event_name, { id : 1, time : Date.now, x : evt.pageX - canvas.offsetLeft, y : evt.pageY - canvas.offsetTop });
+				event_dispatch.shared_instance().defer(event_name, { id : 1, time : Date.now, x : (evt.pageX - canvas.offsetLeft) * scale_x, y : (evt.pageY - canvas.offsetTop) * scale_y });
 			}
 		};
 		
