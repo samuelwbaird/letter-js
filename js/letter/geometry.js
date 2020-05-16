@@ -194,7 +194,7 @@ define([], function () {
 		}
 		
 		font.breaklines = function (text, word_wrap) {
-			if (word_wrap == undefined || word_wrap == 0) {
+			if (word_wrap == undefined || word_wrap == 0 || text == null) {
 				return [text];
 			} else {
 				var key = word_wrap + ':' + text;
