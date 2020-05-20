@@ -4,17 +4,61 @@
 
 define(['letter.geometry', 'letter.dispatch', 'letter.display_list', 'letter.event_dispatch', 'letter.resources', 'letter.button'], function (geometry, dispatch, display_list, event_dispatch, resources, button) {
 
+
+	var fixed_rate_timer = klass(function (fixed_rate_timer) {
+		fixed_rate_timer.init = function (fps, min_frames, max_frames, reset_frames) {
+			this.set_fps(fps, min_frames, max_frames, reset_frames)
+		}
+		
+		fixed_rate_timer.set_fps = function (fps, min_frames = 1, max_frames = 4, reset_frames = 16) {
+			this.fps = fps;
+			this.min_frames = min_frames;
+			this.max_frames = max_frames;
+			this.reset_frames = reset_frames;
+			this.reset();
+		}
+		
+		fixed_rate_timer.reset = function () {
+			this.last_time = Date.now();
+			this.time_accumulated = 0;
+		}
+		
+		fixed_rate_timer.get_frames_due = function () {
+			var now = Date.now();
+			var delta = (now - this.last_time) / 1000.0;
+			this.time_accumulated += delta;
+			this.last_time = now;
+			
+			var frames_due = Math.floor(this.time_accumulated * this.fps)
+			
+			if (this.reset_frames > 0 && frames_due > this.reset_frames) {
+				this.time_accumulated = 0;
+				frames_due = 1;
+			} else if (this.max_frames > 0 && frames_due > this.max_frames) {
+				this.time_accumulated = 0;
+				frames_due = this.max_frames;				
+			} else if (this.min_frames > 0 && frames_due < this.min_frames) {
+				frames_due = 0;
+			} else {
+				this.time_accumulated -= frames_due / this.fps;
+			}
+			
+			return frames_due;
+		}
+		
+	});
+
 	var app = klass(function (app) {
 		
 		app.init = function (screen, timer) {
 			this.screen = screen;
 			this.timer = timer;
-			this.fps = timer.fps;
+			this.fps = new fixed_rate_timer(60);
+			this.animation_fps = new fixed_rate_timer(60);
 			this.resources = resources;
 
 			this.dispatch = new dispatch.frame_dispatch();
 			this.current_scene = null;
-			this.last_time = null;
 			
 			var self = this;
 			button.configure(function (action) { self.dispatch.delay(1, action); });
@@ -51,19 +95,29 @@ define(['letter.geometry', 'letter.dispatch', 'letter.display_list', 'letter.eve
 				}
 				this.current_scene.begin();
 			}
+			
+			this.fps.reset();
+			this.animation_fps.reset();
 		}
 		
 		app.update = function () {
-			var now = Date.now();	
+			// keep up to date with window size
 			if (this.screen != null) {
 				this.screen.update();
+			}
 			
-				// update animation heirachy and fire off on-complete events once done
-				var on_completes = [];
-				this.screen.root_view.update_animated_clips(1.0 / this.fps, function (callback) { on_completes.push(callback); });
-				on_completes.with_each(function (callback) {
-					callback();
-				});
+			var requires_render = false;
+			var animation_frames = this.animation_fps.get_frames_due();
+			if (animation_frames > 0 && this.screen != null) {
+				requires_render = true;
+				for (var i = 0; i < animation_frames; i++) {
+					// update animation heirachy and fire off on-complete events once done
+					var on_completes = [];
+					this.screen.root_view.update_animated_clips(1.0 / this.fps, function (callback) { on_completes.push(callback); });
+					on_completes.with_each(function (callback) {
+						callback();
+					});
+				}
 			}
 			
 			event_dispatch.shared_instance().dispatch_deferred();
@@ -73,29 +127,27 @@ define(['letter.geometry', 'letter.dispatch', 'letter.display_list', 'letter.eve
 				this.dispatch.update();
 			}
 			
-			if (this.current_scene != null) {
-				var frames = 1;
-				if (this.last_time != null) {
-					var delta = (now - this.last_time);
-					if (delta > (1000.0 / this.fps) * 1.25) {
-						frames = 2;
-					}
-				}
-				for (var f = 0; f < frames; f++) {
+			var update_frames = this.fps.get_frames_due();
+			if (update_frames > 0 && this.current_scene != null) {
+				requires_render = true;
+				for (var f = 0; f < update_frames; f++) {
 					if (this.current_scene != null) {
 						this.current_scene.update();
 					}
 				}
-				if (this.screen != null) {
-					this.screen.render();
-				}
 			}
-			this.last_time = now;
+
+			if (requires_render && this.screen != null) {
+				this.screen.render();
+			}
 		}
 		
-		app.set_frame_rate = function (fps) {
-			this.timer.set_frame_rate(fps);
-			this.fps = fps;
+		app.set_frame_rate = function (fps, animation_fps, min_frames, max_frames, reset) {
+			if (!animation_fps) {
+				animation_fps = fps;
+			}			
+			this.fps = new fixed_rate_timer(fps, min_frames, max_frames, reset);
+			this.animation_fps = new fixed_rate_timer(animation_fps, min_frames, max_frames, reset);
 		}
 		
 		app.pause = function () { this.timer.stop(); }
@@ -186,9 +238,6 @@ define(['letter.geometry', 'letter.dispatch', 'letter.display_list', 'letter.eve
 	
 		timer.init = function () {
 			this.active = false;
-			this.fps = 60;
-			this.minimum_delay = (1000.0 / this.fps) - 3;
-			this.last_frame = 0;
 		}
 		
 		timer.start = function (callback) {
@@ -200,13 +249,7 @@ define(['letter.geometry', 'letter.dispatch', 'letter.display_list', 'letter.eve
 					return;
 				}
 				requestAnimFrame(next_frame);
-				var now = get_time();
-				if (now - self.last_frame < self.minimum_delay) {
-					// skip it
-				} else {
-					self.last_frame = now;
-					callback();
-				}
+				callback();
 			}
 
 			requestAnimFrame(next_frame);
@@ -214,11 +257,6 @@ define(['letter.geometry', 'letter.dispatch', 'letter.display_list', 'letter.eve
 		
 		timer.stop = function () {
 			this.active = false;
-		}
-		
-		timer.set_frame_rate = function (fps) {
-			this.fps = fps;
-			this.minimum_delay = (1000.0 / fps) - 3;
 		}
 	});
 
