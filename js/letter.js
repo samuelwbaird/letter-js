@@ -104,7 +104,7 @@ global.cache = klass(function (cache) {
 	cache.set = function (name, value) {
 		if (this.max_size > 0 && this.queue.length >= this.max_size - 1) {
 			var old_name = this.queue.unshift();
-			this.lookup[old_name] = null;
+			delete this.lookup[old_name];
 		}
 		
 		this.queue.push(name);

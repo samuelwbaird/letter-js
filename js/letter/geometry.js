@@ -208,6 +208,7 @@ define([], function () {
 				var current_line_width = 0;
 				var current_word = '';
 				var current_word_width = 0;
+				var last_word_count = 0
 				for (var i = 0; i < text.length; i++) {
 					var char = text.charAt(i);
 					var can_break = (char === ' ' || char === '.' || char === '\t' || char === ',');
@@ -215,9 +216,10 @@ define([], function () {
 					
 					if (current_line != '' && width + current_word_width + current_line_width > word_wrap) {
 						// move to the next line
-						lines.push(current_line);
+						lines.push(current_line.trim());
 						current_line = '';
 						current_line_width = 0;
+						last_word_count = 0;
 					}
 					// add char to the current word
 					current_word = current_word + char;
@@ -227,12 +229,38 @@ define([], function () {
 						current_line_width += current_word_width;
 						current_word = '';
 						current_word_width = 0;
+						last_word_count++;
 					}
 				}
-				current_line = current_line + current_word;
-				if (current_line != '') {
-					lines.push(current_line);
+				if (current_word != '') {
+					current_line = current_line + current_word;
+					last_word_count++;
 				}
+				if (current_line != '') {
+					lines.push(current_line.trim());
+				}
+				
+				// check for a hanging orphan line
+				if (lines.length >= 2 && last_word_count == 1) {
+					// see if we can steal a word from the previous line
+					var previous_line = lines[lines.length - 2];
+					var break_point = previous_line.length;
+					while (break_point > 1) {
+						break_point--;
+						char = previous_line.charAt(break_point);
+						can_break = (char === ' ' || char === '.' || char === '\t' || char === ',');
+						if (can_break) {
+							// check if a substitute works
+							var new_last_line = previous_line.substr(break_point + 1) + ' ' + lines[lines.length - 1];
+							if (this.measure_string(new_last_line) < word_wrap) {
+								lines[lines.length - 1] = new_last_line;
+								lines[lines.length - 2] = previous_line.substr(0, break_point);
+							}
+							break;
+						}
+					}
+				}
+				
 				
 				this.lines_cache.set(key, lines);
 				return lines;
