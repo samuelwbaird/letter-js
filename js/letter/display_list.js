@@ -380,6 +380,7 @@ define(['letter.geometry', 'letter.resources'], function (geometry, resources) {
 						}
 						this.start_frame = frames.start_frame;
 						this.end_frame = frames.end_frame;
+						this.playback_position = this.start_frame
 						label_was_set = true;
 					}
 				} else if (typeof arg == 'function') {
