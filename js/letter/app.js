@@ -70,7 +70,7 @@ define(['letter.geometry', 'letter.dispatch', 'letter.display_list', 'letter.eve
 				this.current_scene = null;
 			}
 			
-			this.dispatch.clear();
+			// can't clear event dispatch here in case of things hooked globally, might be a problem for button callbacks
 			event_dispatch.reset_shared_instance();
 			
 			// if a string reference then load before continuing
