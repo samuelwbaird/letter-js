@@ -617,7 +617,7 @@ define(['letter.geometry', 'letter.resources'], function (geometry, resources) {
 			var tx = 0;
 			var ty = 0;
 			// adjust for vertical_align
-			if (this.vertical_align == 'center') {
+			if (this.vertical_align == 'center' || this.vertical_align == 'middle') {
 				// do nothing
 			} else if (this.vertical_align == 'top') {
 				ty += this.font.line_height * 0.5;
@@ -630,7 +630,7 @@ define(['letter.geometry', 'letter.resources'], function (geometry, resources) {
 			} else {
 				var lines = this.font.breaklines(this.text, this.word_wrap);
 				// adjust for vertical_align
-				if (this.vertical_align == 'center') {
+				if (this.vertical_align == 'center' || this.vertical_align == 'middle') {
 					ty -= (lines.length - 1) * 0.5 * this.font.line_height;
 				} else if (this.vertical_align == 'top') {
 					// do nothing
