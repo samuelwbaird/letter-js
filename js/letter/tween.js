@@ -7,42 +7,36 @@ var global = window
 
 define([], function () {
 	var easing = modul(function (easing) {
-		var cached_from_formula = function (cache, frames, formula) {
-			return cache.get_or_set(frames, function () {
-				var out = [];
-				var scale = 1 / frames;
-				for (var i = 1; i <= frames; i++) {
-					var ratio = i * scale;
-					out.push(formula(ratio));
-				}
-				return out;
-			})
+		var from_formula = function (frames, formula) {
+			var out = [];
+			var scale = 1 / frames;
+			for (var i = 1; i <= frames; i++) {
+				var ratio = i * scale;
+				out.push(formula(ratio));
+			}
+			return out;
 		}
 		
-		var linear_cache = new cache(128);
 		easing.linear = function (frames) {
-			return cached_from_formula(linear_cache, frames, function (ratio) {
+			return from_formula(frames, function (ratio) {
 				return ratio;
 			})
 		}
 		
-		var ease_in_cache = new cache(128);
 		easing.ease_in = function (frames) {
-			return cached_from_formula(ease_in_cache, frames, function (ratio) {
+			return from_formula(frames, function (ratio) {
 				return ratio * ratio
 			})
 		}
 
-		var ease_out_cache = new cache(128)
 		easing.ease_out = function (frames) {
-			return cached_from_formula(ease_out_cache, frames, function (ratio) {
+			return from_formula(frames, function (ratio) {
 				return 1 - (1 - ratio) * (1 - ratio)
 			})
 		}
 
-		var ease_inout_cache = new cache(128)
 		easing.ease_inout = function (frames) {
-			return cached_from_formula(ease_inout_cache, frames, function (ratio) {
+			return from_formula(frames, function (ratio) {
 				ratio = ratio * 2
 				if (ratio < 1) {
 					return ratio * ratio * 0.5

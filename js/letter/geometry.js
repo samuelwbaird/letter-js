@@ -165,10 +165,6 @@ define([], function () {
 			} else {
 				this.line_height = size;
 			}
-			// cache the measured width of letters
-			this.letter_cache = new cache(1024);
-			// cache the line breaks of lines
-			this.lines_cache = new cache(128);
 		}
 		
 		font.set = function (ctx, force) {
@@ -180,29 +176,15 @@ define([], function () {
 			ctx.textBaseline = this.baseline;
 		}
 		
-		// measure a letter and cache the result
 		font.measure_string = function (str) {
-			var entry = this.letter_cache.get(str);
-			if (entry != undefined) {
-				return entry;
-
-			}
 			this.set();
-			var measure = this.ctx.measureText(str);
-			this.letter_cache.set(str, measure.width);
-			return measure.width;
+			return this.ctx.measureText(str).width;
 		}
 		
 		font.breaklines = function (text, word_wrap) {
 			if (word_wrap == undefined || word_wrap == 0 || text == null) {
 				return [text];
 			} else {
-				var key = word_wrap + ':' + text;
-				var entry = this.lines_cache.get(key);
-				if (entry != undefined) {
-					return entry;
-				}
-				
 				var lines = [];
 				var current_line = '';
 				var current_line_width = 0;
@@ -261,8 +243,6 @@ define([], function () {
 					}
 				}
 				
-				
-				this.lines_cache.set(key, lines);
 				return lines;
 			}
 		}

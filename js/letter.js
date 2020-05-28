@@ -88,40 +88,6 @@ global.delegate = function (obj, method) {
 	return function () { method.apply(obj, arguments); }
 }
 
-// -- cache results by key --------------------------
-
-global.cache = klass(function (cache) {	
-	cache.init = function (max_size) {
-		this.max_size = max_size;
-		this.lookup = {};
-		this.queue = [];
-	}
-	
-	cache.get = function (name) {
-		return this.lookup[name];
-	}
-	
-	cache.set = function (name, value) {
-		if (this.max_size > 0 && this.queue.length >= this.max_size - 1) {
-			var old_name = this.queue.unshift();
-			delete this.lookup[old_name];
-		}
-		
-		this.queue.push(name);
-		this.lookup[name] = value;
-		return value;
-	}
-	
-	cache.get_or_set = function (name, value_function) {
-		var existing = this.lookup[name];
-		if (existing != null && existing != undefined) {
-			return existing;
-		}
-		
-		return this.set(name, value_function());
-	}		
-});
-
 // -- collection with tag/callback/expire behaviour ----------------
 
 global.update_list = klass(function (update_list) {

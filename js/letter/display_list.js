@@ -603,6 +603,10 @@ define(['letter.geometry', 'letter.resources'], function (geometry, resources) {
 			this.font = font;
 			this.text = text;
 			this.color = (color != undefined ? color : geometry.color.black);
+			
+			
+			this.last_break = null;
+			this.last_lines = null;
 		}
 		
 		label.content_render = function (ctx, transform) {
@@ -628,7 +632,12 @@ define(['letter.geometry', 'letter.resources'], function (geometry, resources) {
 			if (this.word_wrap == undefined) {
 				ctx.fillText(this.text, tx, ty);
 			} else {
-				var lines = this.font.breaklines(this.text, this.word_wrap);
+				var this_break = this.word_wrap + ':' + this.text;
+				var lines = this.last_lines;
+				if (this_break != this.last_break) {
+					this.last_break = this_break;
+					lines = this.last_lines = this.font.breaklines(this.text, this.word_wrap);
+				}
 				// adjust for vertical_align
 				if (this.vertical_align == 'center' || this.vertical_align == 'middle') {
 					ty -= (lines.length - 1) * 0.5 * this.font.line_height;
