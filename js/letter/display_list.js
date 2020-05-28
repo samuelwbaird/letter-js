@@ -208,7 +208,7 @@ define(['letter.geometry', 'letter.resources'], function (geometry, resources) {
 			} else {
 				// clear and re-use
 				temporary_ctx = this.frozen_image_canvas.getContext('2d');
-				this.ctx.clearRect(0, 0, this.frozen_image_canvas.width, this.frozen_image_canvas.height);
+				temporary_ctx.clearRect(0, 0, this.frozen_image_canvas.width, this.frozen_image_canvas.height);
 			}
 			
 			var transform = geometry.default_transform();

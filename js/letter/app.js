@@ -207,6 +207,7 @@ define(['letter.geometry', 'letter.dispatch', 'letter.display_list', 'letter.eve
 				// other screenfit strategies
 			}
 			
+			this.content_scale = scale;
 			this.width = this.canvas.width / scale;
 			this.height = this.canvas.height / scale;
 			
