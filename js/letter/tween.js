@@ -88,6 +88,12 @@ define([], function () {
 		tween.update = function () {
 			if (this.delay && this.delay > 0) {
 				this.delay--;
+				if (this.delay == 0) {
+					// re-capture starting values after the delay if one applies
+					for (var k in this.properties) {
+						this.properties[k].initial = this.target[k];
+					}
+				}
 				return false;
 			}
 			
