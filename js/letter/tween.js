@@ -60,6 +60,8 @@ define([], function () {
 					out[i] = values[values.length - 1]
 				}
 			}
+			// make sure the final values matteh
+			out[out.length - 1] = values[values.length - 1]
 			return out
 		}		
 	});
