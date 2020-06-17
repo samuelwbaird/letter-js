@@ -50,8 +50,8 @@ define([], function () {
 		easing.interpolate = function (values, frames) {
 			var scale = (values.length - 1) / frames;
 			var out = [];
-			for (var i = 1; i <= frames; i++) {
-				var ratio = (i - 1) * scale;
+			for (var i = 0; i < frames; i++) {
+				var ratio = (i + 1) * scale;
 				var base = Math.floor(ratio);
 				var offset = ratio - base;
 				if (base < values.length) {
@@ -60,7 +60,7 @@ define([], function () {
 					out[i] = values[values.length - 1]
 				}
 			}
-			// make sure the final values matteh
+			// make sure the final value always is an exact match
 			out[out.length - 1] = values[values.length - 1]
 			return out
 		}		
