@@ -15,3 +15,8 @@ There should be one _app_ object running the overall event dispatch and frame ti
 Scenes should be objects derived from _app___node_, and an example loading screen is provided, along with a title screen that displays onces the required resources have loaded.
 
 The Lua letter library should serve as a reference on the display list, event handling, tweening, resource loading and animation, although not all features port naturally to JS.
+
+##TODO
+
+ * Add support for rect, circle, label within animation clip data (eg. clip_frame.add_label_content)
+ * During animation reuse of frames, check that types match as well as instance name
