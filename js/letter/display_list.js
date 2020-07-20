@@ -158,7 +158,7 @@ define(['letter.geometry', 'letter.resources'], function (geometry, resources) {
 				var out = null;
 				var ref = reference.world_transform()
 				for (var j = 0; j < 4; j++) {
-					rect = geometry.rect_expand_to_include_point(rect, ref.untransform_point(points[j]));
+					rect = geometry.rect_expand_to_include_point(rect, geometry.untransform_point(ref, points[j]));
 				}
 				return rect;
 			}
@@ -208,7 +208,7 @@ define(['letter.geometry', 'letter.resources'], function (geometry, resources) {
 			} else {
 				// clear and re-use
 				temporary_ctx = this.frozen_image_canvas.getContext('2d');
-				this.ctx.clearRect(0, 0, this.frozen_image_canvas.width, this.frozen_image_canvas.height);
+				temporary_ctx.clearRect(0, 0, this.frozen_image_canvas.width, this.frozen_image_canvas.height);
 			}
 			
 			var transform = geometry.default_transform();
@@ -380,6 +380,7 @@ define(['letter.geometry', 'letter.resources'], function (geometry, resources) {
 						}
 						this.start_frame = frames.start_frame;
 						this.end_frame = frames.end_frame;
+						this.playback_position = this.start_frame
 						label_was_set = true;
 					}
 				} else if (typeof arg == 'function') {
@@ -602,6 +603,10 @@ define(['letter.geometry', 'letter.resources'], function (geometry, resources) {
 			this.font = font;
 			this.text = text;
 			this.color = (color != undefined ? color : geometry.color.black);
+			
+			
+			this.last_break = null;
+			this.last_lines = null;
 		}
 		
 		label.content_render = function (ctx, transform) {
@@ -616,7 +621,7 @@ define(['letter.geometry', 'letter.resources'], function (geometry, resources) {
 			var tx = 0;
 			var ty = 0;
 			// adjust for vertical_align
-			if (this.vertical_align == 'center') {
+			if (this.vertical_align == 'center' || this.vertical_align == 'middle') {
 				// do nothing
 			} else if (this.vertical_align == 'top') {
 				ty += this.font.line_height * 0.5;
@@ -627,9 +632,14 @@ define(['letter.geometry', 'letter.resources'], function (geometry, resources) {
 			if (this.word_wrap == undefined) {
 				ctx.fillText(this.text, tx, ty);
 			} else {
-				var lines = this.font.breaklines(this.text, this.word_wrap);
+				var this_break = this.word_wrap + ':' + this.text;
+				var lines = this.last_lines;
+				if (this_break != this.last_break) {
+					this.last_break = this_break;
+					lines = this.last_lines = this.font.breaklines(this.text, this.word_wrap);
+				}
 				// adjust for vertical_align
-				if (this.vertical_align == 'center') {
+				if (this.vertical_align == 'center' || this.vertical_align == 'middle') {
 					ty -= (lines.length - 1) * 0.5 * this.font.line_height;
 				} else if (this.vertical_align == 'top') {
 					// do nothing

@@ -18,6 +18,34 @@ define(['letter.geometry'], function (geometry) {
 		return all_clip_data[name];
 	}
 	
+	var get_combined_clip_data = function (from_clips) {
+		// combine multiple clips, using the clip name as a default label where one does not exist
+		var combined_clip_data = new geometry.clip_data();
+		for (var i = 0; i < from_clips.length; i++) {
+			var other_data = all_clip_data[from_clips[i]];
+			//  create a label for the whole clip being combined
+			combined_clip_data.labels[from_clips[i]] = { start_frame: combined_clip_data.frames.length + 1, end_frame: combined_clip_data.frames.length + other_data.frames.length };
+			// merge in labels for this other clip
+			other_data.labels.with_each(function (name, frames) {
+				combined_clip_data.labels[name] = {
+					start_frame: frames.start_frame + combined_clip_data.frames.length,
+					end_frame: frames.end_frame + combined_clip_data.frames.length,
+				};
+			});
+			other_data.frames.with_each(function (frame) {
+				combined_clip_data.frames.push(frame);
+			});
+		}
+		combined_clip_data.link_resources();
+		return combined_clip_data;
+	}	
+	
+	var create_combined_clip_data = function (name, clips) {
+		all_clip_data[name] = get_combined_clip_data(clips);
+		all_clip_data[name].name = name
+		return all_clip_data[name]
+	}
+	
 	var get_cached = function (type, name, url, retrieve_callback) {
 		var key = type + ':' + name + ':' + url
 		var entry = cache[key];
@@ -150,34 +178,45 @@ define(['letter.geometry'], function (geometry) {
 					var frame_no = 0;
 					clip.frames.with_each(function (frame) {
 						frame_no++;
-						var frame_data = clip_data.add_frame(frame.label);
-						if (frame.content.with_each) {
-							frame.content.with_each(function (entry) {
-								if (entry.image) {
-									frame_data.add_image_content(
-										entry.name,
-										entry.image,
-										entry.transform[0],
-										entry.transform[1],
-										entry.transform[2],
-										entry.transform[3],
-										entry.transform[4],
-										entry.transform[5]
-									);
-								} else if (entry.clip) {
-									frame_data.add_clip_content(
-										entry.name,
-										entry.image,
-										entry.transform[0],
-										entry.transform[1],
-										entry.transform[2],
-										entry.transform[3],
-										entry.transform[4],
-										entry.transform[5],
-										entry.transform[6]										
-									);
-								}
-							});
+						// special case where each frame is only a single image
+						if (typeof frame == 'string') {
+							var frame_data = clip_data.add_frame(null);
+							frame_data.add_image_content(
+								null,
+								all_image_data[frame],
+								0, 0, 1, 1, 0, 1
+							);
+							
+						} else {
+							var frame_data = clip_data.add_frame(frame.label);
+							if (frame.content.with_each) {
+								frame.content.with_each(function (entry) {
+									if (entry.image) {
+										frame_data.add_image_content(
+											entry.name,
+											entry.image,
+											entry.transform[0],
+											entry.transform[1],
+											entry.transform[2],
+											entry.transform[3],
+											entry.transform[4],
+											entry.transform[5]
+										);
+									} else if (entry.clip) {
+										frame_data.add_clip_content(
+											entry.name,
+											entry.image,
+											entry.transform[0],
+											entry.transform[1],
+											entry.transform[2],
+											entry.transform[3],
+											entry.transform[4],
+											entry.transform[5],
+											entry.transform[6]										
+										);
+									}
+								});
+							}
 						}
 					});
 				
@@ -219,5 +258,7 @@ define(['letter.geometry'], function (geometry) {
 		require_fontface : require_fontface,
 		get_image_data : get_image_data,
 		get_clip_data : get_clip_data,
+		create_combined_clip_data: create_combined_clip_data,
+		get_combined_clip_data: get_combined_clip_data
 	}
 })

@@ -29,7 +29,7 @@
 
 		// launch app with nominal sizing
 		require(['letter.app', 'example.loading_scene'], function (app, loading_scene) {
-			window.app = app.launch(canvas, new loading_scene(), 320, 480)
+			window.app = app.launch(canvas, new loading_scene(), 320, 480, 'fit')
 		});
 				
 		// prevent scrolling on arrow keys

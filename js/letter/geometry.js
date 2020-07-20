@@ -165,10 +165,6 @@ define([], function () {
 			} else {
 				this.line_height = size;
 			}
-			// cache the measured width of letters
-			this.letter_cache = new cache(1024);
-			// cache the line breaks of lines
-			this.lines_cache = new cache(128);
 		}
 		
 		font.set = function (ctx, force) {
@@ -180,34 +176,21 @@ define([], function () {
 			ctx.textBaseline = this.baseline;
 		}
 		
-		// measure a letter and cache the result
 		font.measure_string = function (str) {
-			var entry = this.letter_cache.get(str);
-			if (entry != undefined) {
-				return entry;
-
-			}
 			this.set();
-			var measure = this.ctx.measureText(str);
-			this.letter_cache.set(str, measure.width);
-			return measure.width;
+			return this.ctx.measureText(str).width;
 		}
 		
 		font.breaklines = function (text, word_wrap) {
-			if (word_wrap == undefined || word_wrap == 0) {
+			if (word_wrap == undefined || word_wrap == 0 || text == null) {
 				return [text];
 			} else {
-				var key = word_wrap + ':' + text;
-				var entry = this.lines_cache.get(key);
-				if (entry != undefined) {
-					return entry;
-				}
-				
 				var lines = [];
 				var current_line = '';
 				var current_line_width = 0;
 				var current_word = '';
 				var current_word_width = 0;
+				var last_word_count = 0
 				for (var i = 0; i < text.length; i++) {
 					var char = text.charAt(i);
 					var can_break = (char === ' ' || char === '.' || char === '\t' || char === ',');
@@ -215,9 +198,10 @@ define([], function () {
 					
 					if (current_line != '' && width + current_word_width + current_line_width > word_wrap) {
 						// move to the next line
-						lines.push(current_line);
+						lines.push(current_line.trim());
 						current_line = '';
 						current_line_width = 0;
+						last_word_count = 0;
 					}
 					// add char to the current word
 					current_word = current_word + char;
@@ -227,14 +211,38 @@ define([], function () {
 						current_line_width += current_word_width;
 						current_word = '';
 						current_word_width = 0;
+						last_word_count++;
 					}
 				}
-				current_line = current_line + current_word;
+				if (current_word != '') {
+					current_line = current_line + current_word;
+					last_word_count++;
+				}
 				if (current_line != '') {
-					lines.push(current_line);
+					lines.push(current_line.trim());
 				}
 				
-				this.lines_cache.set(key, lines);
+				// check for a hanging orphan line
+				if (lines.length >= 2 && last_word_count == 1) {
+					// see if we can steal a word from the previous line
+					var previous_line = lines[lines.length - 2];
+					var break_point = previous_line.length;
+					while (break_point > 1) {
+						break_point--;
+						char = previous_line.charAt(break_point);
+						can_break = (char === ' ' || char === '.' || char === '\t' || char === ',');
+						if (can_break) {
+							// check if a substitute works
+							var new_last_line = previous_line.substr(break_point + 1) + ' ' + lines[lines.length - 1];
+							if (this.measure_string(new_last_line) < word_wrap) {
+								lines[lines.length - 1] = new_last_line;
+								lines[lines.length - 2] = previous_line.substr(0, break_point);
+							}
+							break;
+						}
+					}
+				}
+				
 				return lines;
 			}
 		}

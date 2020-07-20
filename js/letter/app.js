@@ -4,17 +4,61 @@
 
 define(['letter.geometry', 'letter.dispatch', 'letter.display_list', 'letter.event_dispatch', 'letter.resources', 'letter.button'], function (geometry, dispatch, display_list, event_dispatch, resources, button) {
 
+
+	var fixed_rate_timer = klass(function (fixed_rate_timer) {
+		fixed_rate_timer.init = function (fps, min_frames, max_frames, reset_frames) {
+			this.set_fps(fps, min_frames, max_frames, reset_frames)
+		}
+		
+		fixed_rate_timer.set_fps = function (fps, min_frames = 1, max_frames = 4, reset_frames = 16) {
+			this.fps = fps;
+			this.min_frames = min_frames;
+			this.max_frames = max_frames;
+			this.reset_frames = reset_frames;
+			this.reset();
+		}
+		
+		fixed_rate_timer.reset = function () {
+			this.last_time = Date.now();
+			this.time_accumulated = 0;
+		}
+		
+		fixed_rate_timer.get_frames_due = function () {
+			var now = Date.now();
+			var delta = (now - this.last_time) / 1000.0;
+			this.time_accumulated += delta;
+			this.last_time = now;
+			
+			var frames_due = Math.floor(this.time_accumulated * this.fps)
+			
+			if (this.reset_frames > 0 && frames_due > this.reset_frames) {
+				this.time_accumulated = 0;
+				frames_due = 1;
+			} else if (this.max_frames > 0 && frames_due > this.max_frames) {
+				this.time_accumulated = 0;
+				frames_due = this.max_frames;				
+			} else if (this.min_frames > 0 && frames_due < this.min_frames) {
+				frames_due = 0;
+			} else {
+				this.time_accumulated -= frames_due / this.fps;
+			}
+			
+			return frames_due;
+		}
+		
+	});
+
 	var app = klass(function (app) {
 		
 		app.init = function (screen, timer) {
 			this.screen = screen;
 			this.timer = timer;
-			this.fps = timer.fps;
+			this.fps = new fixed_rate_timer(60);
+			this.animation_fps = new fixed_rate_timer(60);
 			this.resources = resources;
 
 			this.dispatch = new dispatch.frame_dispatch();
 			this.current_scene = null;
-			this.last_time = null;
 			
 			var self = this;
 			button.configure(function (action) { self.dispatch.delay(1, action); });
@@ -26,7 +70,7 @@ define(['letter.geometry', 'letter.dispatch', 'letter.display_list', 'letter.eve
 				this.current_scene = null;
 			}
 			
-			this.dispatch.clear();
+			// can't clear event dispatch here in case of things hooked globally, might be a problem for button callbacks
 			event_dispatch.reset_shared_instance();
 			
 			// if a string reference then load before continuing
@@ -46,21 +90,35 @@ define(['letter.geometry', 'letter.dispatch', 'letter.display_list', 'letter.eve
 				this.current_scene.screen = this.screen
 				
 				this.current_scene.prepare();
-				this.screen.root_view.add(scene.view);
+				if (this.screen != null) {
+					this.screen.root_view.add(scene.view);
+				}
 				this.current_scene.begin();
 			}
+			
+			this.fps.reset();
+			this.animation_fps.reset();
 		}
 		
 		app.update = function () {
-			var now = Date.now();	
-			this.screen.update();
+			// keep up to date with window size
+			if (this.screen != null) {
+				this.screen.update();
+			}
 			
-			// update animation heirachy and fire off on-complete events once done
-			var on_completes = [];
-			this.screen.root_view.update_animated_clips(1.0 / this.fps, function (callback) { on_completes.push(callback); });
-			on_completes.with_each(function (callback) {
-				callback();
-			});
+			var requires_render = false;
+			var animation_frames = this.animation_fps.get_frames_due();
+			if (animation_frames > 0 && this.screen != null) {
+				requires_render = true;
+				for (var i = 0; i < animation_frames; i++) {
+					// update animation heirachy and fire off on-complete events once done
+					var on_completes = [];
+					this.screen.root_view.update_animated_clips(1.0 / this.fps, function (callback) { on_completes.push(callback); });
+					on_completes.with_each(function (callback) {
+						callback();
+					});
+				}
+			}
 			
 			event_dispatch.shared_instance().dispatch_deferred();
 			if (global.safe_updates) {
@@ -69,27 +127,27 @@ define(['letter.geometry', 'letter.dispatch', 'letter.display_list', 'letter.eve
 				this.dispatch.update();
 			}
 			
-			if (this.current_scene != null) {
-				var frames = 1;
-				if (this.last_time != null) {
-					var delta = (now - this.last_time);
-					if (delta > (1000.0 / this.fps) * 1.25) {
-						frames = 2;
-					}
-				}
-				for (var f = 0; f < frames; f++) {
+			var update_frames = this.fps.get_frames_due();
+			if (update_frames > 0 && this.current_scene != null) {
+				requires_render = true;
+				for (var f = 0; f < update_frames; f++) {
 					if (this.current_scene != null) {
 						this.current_scene.update();
 					}
 				}
+			}
+
+			if (requires_render && this.screen != null) {
 				this.screen.render();
 			}
-			this.last_time = now;
 		}
 		
-		app.set_frame_rate = function (fps) {
-			this.timer.set_frame_rate(fps);
-			this.fps = fps;
+		app.set_frame_rate = function (fps, animation_fps, min_frames, max_frames, reset) {
+			if (!animation_fps) {
+				animation_fps = fps;
+			}			
+			this.fps = new fixed_rate_timer(fps, min_frames, max_frames, reset);
+			this.animation_fps = new fixed_rate_timer(animation_fps, min_frames, max_frames, reset);
 		}
 		
 		app.pause = function () { this.timer.stop(); }
@@ -97,11 +155,11 @@ define(['letter.geometry', 'letter.dispatch', 'letter.display_list', 'letter.eve
 	});
 	
 	var screen = klass(function (screen) {
-		screen.init = function (canvas, nominal_width, nominal_height, fit) {
+		screen.init = function (canvas, ideal_width, ideal_height, fit) {
 			this.canvas = canvas;
 			this.ctx = canvas.getContext("2d");
-			this.nominal_height = nominal_height;
-			this.nominal_width = nominal_width;
+			this.ideal_height = ideal_height;
+			this.ideal_width = ideal_width;
 			this.fit = fit;
 			this.root_view = new display_list.display_list();
 			
@@ -120,24 +178,27 @@ define(['letter.geometry', 'letter.dispatch', 'letter.display_list', 'letter.eve
 	
 		screen.touch_event = function (event_name, evt) {
 			evt.preventDefault();
+			
+			// correct co-ords for hdpi displays
+			var scale_x = canvas.width / canvas.clientWidth;
+			var scale_y = canvas.height / canvas.clientHeight;
+			
 			if (evt.changedTouches) {
 				for (var i = 0; i < evt.changedTouches.length; i++) {
 					var touch = evt.changedTouches[i];
-					event_dispatch.shared_instance().defer(event_name, { id : touch.identifier, time : Date.now, x : touch.pageX - canvas.offsetLeft, y : touch.pageY - canvas.offsetTop });
+					event_dispatch.shared_instance().defer(event_name, { id : touch.identifier, time : Date.now, x : (touch.pageX - canvas.offsetLeft) * scale_x, y : (touch.pageY - canvas.offsetTop) * scale_y });
 				}
 			} else {
-				event_dispatch.shared_instance().defer(event_name, { id : 1, time : Date.now, x : evt.pageX - canvas.offsetLeft, y : evt.pageY - canvas.offsetTop });
+				event_dispatch.shared_instance().defer(event_name, { id : 1, time : Date.now, x : (evt.pageX - canvas.offsetLeft) * scale_x, y : (evt.pageY - canvas.offsetTop) * scale_y });
 			}
 		};
 		
 		screen.update = function () {
 			// update transform of root view to match sizing
-		}
-		
-		screen.render = function () {
+
 			// update scaling to fit nominal sizing to canvas size
-			var scale_x = this.canvas.width / this.nominal_width;
-			var scale_y = this.canvas.height / this.nominal_height;
+			var scale_x = this.canvas.width / this.ideal_width;
+			var scale_y = this.canvas.height / this.ideal_height;
 			var scale = 1;
 			
 			if (this.fit == 'fit') {
@@ -145,10 +206,17 @@ define(['letter.geometry', 'letter.dispatch', 'letter.display_list', 'letter.eve
 			} else {
 				// other screenfit strategies
 			}
-
-			this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+			
+			this.content_scale = scale;
+			this.width = this.canvas.width / scale;
+			this.height = this.canvas.height / scale;
+			
 			this.root_view.scale_x = scale;
 			this.root_view.scale_y = scale;
+		}
+		
+		screen.render = function () {
+			this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 			this.root_view.render(this.ctx, geometry.default_transform()); 
 		}
 		
@@ -171,9 +239,6 @@ define(['letter.geometry', 'letter.dispatch', 'letter.display_list', 'letter.eve
 	
 		timer.init = function () {
 			this.active = false;
-			this.fps = 60;
-			this.minimum_delay = (1000.0 / this.fps) - 3;
-			this.last_frame = 0;
 		}
 		
 		timer.start = function (callback) {
@@ -185,13 +250,7 @@ define(['letter.geometry', 'letter.dispatch', 'letter.display_list', 'letter.eve
 					return;
 				}
 				requestAnimFrame(next_frame);
-				var now = get_time();
-				if (now - self.last_frame < self.minimum_delay) {
-					// skip it
-				} else {
-					self.last_frame = now;
-					callback();
-				}
+				callback();
 			}
 
 			requestAnimFrame(next_frame);
@@ -200,11 +259,6 @@ define(['letter.geometry', 'letter.dispatch', 'letter.display_list', 'letter.eve
 		timer.stop = function () {
 			this.active = false;
 		}
-		
-		timer.set_frame_rate = function (fps) {
-			this.fps = fps;
-			this.minimum_delay = (1000.0 / fps) - 3;
-		}
 	});
 
 	// exported module
@@ -212,9 +266,9 @@ define(['letter.geometry', 'letter.dispatch', 'letter.display_list', 'letter.eve
 	
 		launch : function (canvas, scene, width, height, fit) {
 			console.log('app launch');
-			var _screen = new screen(canvas, width, height, fit);
+			var _screen = (canvas != null) ? new screen(canvas, width, height, fit) : null;
+
 			var _timer = new timer();
-			
 			var _app = new app(_screen, _timer);
 
 			window.app = _app;

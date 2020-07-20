@@ -67,8 +67,8 @@ define(['letter.dispatch', 'letter.display_list', 'letter.tween', 'letter.touch_
 			return this.tween_manager;
 		}
 		
-		app_node.tween = function (target, easing, properties, on_complete) {
-			var t = new tween.tween(target, easing, properties, on_complete)
+		app_node.tween = function (target, easing, properties, optional_params) {
+			var t = new tween.tween(target, easing, properties, optional_params)
 			this.get_tween_manager().add(t);
 			return t;
 		}
@@ -84,8 +84,8 @@ define(['letter.dispatch', 'letter.display_list', 'letter.tween', 'letter.touch_
 			this.get_frame_dispatch().delay(count, fn, tag);
 		}
 		
-		app_node.add_button = function (clip, action, event_dispatch) {
-			var btn = new button(clip, action, event_dispatch);
+		app_node.add_button = function (clip, action, event_dispatch, init_values) {
+			var btn = new button(clip, action, event_dispatch, init_values);
 			this.add_disposable(btn);
 			return btn;
 		}

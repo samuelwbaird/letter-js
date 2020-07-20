@@ -7,42 +7,36 @@ var global = window
 
 define([], function () {
 	var easing = modul(function (easing) {
-		var cached_from_formula = function (cache, frames, formula) {
-			return cache.get_or_set(frames, function () {
-				var out = [];
-				var scale = 1 / frames;
-				for (var i = 1; i <= frames; i++) {
-					var ratio = i * scale;
-					out.push(formula(ratio));
-				}
-				return out;
-			})
+		var from_formula = function (frames, formula) {
+			var out = [];
+			var scale = 1 / frames;
+			for (var i = 1; i <= frames; i++) {
+				var ratio = i * scale;
+				out.push(formula(ratio));
+			}
+			return out;
 		}
 		
-		var linear_cache = new cache(128);
 		easing.linear = function (frames) {
-			return cached_from_formula(linear_cache, frames, function (ratio) {
+			return from_formula(frames, function (ratio) {
 				return ratio;
 			})
 		}
 		
-		var ease_in_cache = new cache(128);
 		easing.ease_in = function (frames) {
-			return cached_from_formula(ease_in_cache, frames, function (ratio) {
+			return from_formula(frames, function (ratio) {
 				return ratio * ratio
 			})
 		}
 
-		var ease_out_cache = new cache(128)
 		easing.ease_out = function (frames) {
-			return cached_from_formula(ease_out_cache, frames, function (ratio) {
+			return from_formula(frames, function (ratio) {
 				return 1 - (1 - ratio) * (1 - ratio)
 			})
 		}
 
-		var ease_inout_cache = new cache(128)
 		easing.ease_inout = function (frames) {
-			return cached_from_formula(ease_inout_cache, frames, function (ratio) {
+			return from_formula(frames, function (ratio) {
 				ratio = ratio * 2
 				if (ratio < 1) {
 					return ratio * ratio * 0.5
@@ -56,8 +50,8 @@ define([], function () {
 		easing.interpolate = function (values, frames) {
 			var scale = (values.length - 1) / frames;
 			var out = [];
-			for (var i = 1; i <= frames; i++) {
-				var ratio = (i - 1) * scale;
+			for (var i = 0; i < frames; i++) {
+				var ratio = (i + 1) * scale;
 				var base = Math.floor(ratio);
 				var offset = ratio - base;
 				if (base < values.length) {
@@ -66,15 +60,23 @@ define([], function () {
 					out[i] = values[values.length - 1]
 				}
 			}
+			// make sure the final value always is an exact match
+			out[out.length - 1] = values[values.length - 1]
 			return out
 		}		
 	});
 	
 	var tween = klass(function (tween) {
-		tween.init = function (target, easing, properties, on_complete) {
+		tween.init = function (target, easing, properties, optional_params) {
 			this.target = target
 			this.easing = easing
-			this.on_complete = on_complete
+			// backwards compatibility, if optional_params is a function, it is the on_complete
+			if (typeof optional_params == 'function') {
+				this.on_complete = optional_params
+			} else if (optional_params) {
+				this.on_complete = optional_params.on_complete
+				this.delay = optional_params.delay				
+			}
 		
 			// gather start and end values for all tweened properties
 			this.properties = {}
@@ -86,6 +88,17 @@ define([], function () {
 		}
 	
 		tween.update = function () {
+			if (this.delay && this.delay > 0) {
+				this.delay--;
+				if (this.delay == 0) {
+					// re-capture starting values after the delay if one applies
+					for (var k in this.properties) {
+						this.properties[k].initial = this.target[k];
+					}
+				}
+				return false;
+			}
+			
 			if (this.frame < this.easing.length) {
 				var ratio = this.easing[this.frame++];
 				var inverse = 1 - ratio;

@@ -16,15 +16,26 @@ define(['letter.touch_area'], function (touch_area) {
 	var button_touch_out_padding = 20;
 	
 	var button = klass(function (button) {
-		button.init = function (clip, action, event_dispatch) {
+		button.init = function (clip, action, event_dispatch, init_values) {
 			// base properties for a button
 			this.clip = clip
 			this.action = action
 			this.event_dispatch = event_dispatch
 		
 			// override these properties if required
-			this.up_frame = 1
-			this.down_frame = 2
+			if (clip.goto != null) {
+				// if the clip appears to be an animated clip then default to using these frames as the button states
+				this.up_frame = 1
+				this.down_frame = 2
+			}
+			
+			if (init_values) {
+				for (var k in init_values) {
+					this[k] = init_values[k];
+				}
+			}
+			
+			// internal
 			this.is_down = false
 			this.is_releasing = false
 		
@@ -64,7 +75,7 @@ define(['letter.touch_area'], function (touch_area) {
 					button_on_button_down(this);
 					if (typeof this.down_frame == 'function') {
 						this.down_frame(this);
-					} else {
+					} else if (this.clip.goto != null) {
 						this.clip.goto(this.down_frame);
 					}
 				}
@@ -74,7 +85,7 @@ define(['letter.touch_area'], function (touch_area) {
 					button_on_button_up(this);
 					if (typeof this.up_frame == 'function') {
 						this.up_frame(this);
-					} else {
+					} else if (this.clip.goto != null) {
 						this.clip.goto(this.up_frame);
 					}
 				}
