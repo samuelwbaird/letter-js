@@ -5,15 +5,13 @@
 	-->
 	<head>
 		<title>Letter JS Example</title>
-		<script src="js/letter.js"></script>
 		<style>
 		body, html { height : 100%; }
 		body { overflow: hidden; }
 		</style>
-		
 	</head>
 	<body>
-		<script>
+		<script type="module">
 		// main canvas
 		var canvas = document.createElement("canvas");
 		canvas.width = window.innerWidth;
@@ -27,11 +25,6 @@
 			canvas.height = window.innerHeight;
 		}, false);
 
-		// launch app with nominal sizing
-		require(['letter.app', 'example.loading_scene'], function (app, loading_scene) {
-			window.app = app.launch(canvas, new loading_scene(), 320, 480, 'fit')
-		});
-				
 		// prevent scrolling on arrow keys
 		window.addEventListener("keydown", function(e) {
 		    // space, page up, page down and arrow keys:
@@ -39,6 +32,15 @@
 		        e.preventDefault();
 		    }
 		}, false);		
+
+		// launch app with nominal sizing
+		import { geometry } from './js/letter/letter.js';
+		import * as letter from './js/letter/letter.js';
+		letter.launch('example.loading_scene')
+		// require(['letter.app', 'example.loading_scene'], function (app, loading_scene) {
+		// 	window.app = app.launch(canvas, new loading_scene(), 320, 480, 'fit')
+		// });
+				
 		</script>
 		
 	</body>
