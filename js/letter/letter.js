@@ -2,13 +2,15 @@
 // copyright 2020 Samuel Baird MIT Licence
 
 import * as geometry from './geometry.js';
+import * as dispatch from './dispatch.js';
+import * as resources from './resources.js';
 
 function launch (scene_name) {
 	alert('launchy! ' + scene_name);
 }
 
 
-export { launch, geometry };
+export { launch, geometry, dispatch };
 
 /*
 'use strict';

@@ -2,6 +2,7 @@
 // copyright 2020 Samuel Baird MIT Licence
 
 // -- point --------------------------------------------------------------------
+// basic 2d x,y position
 
 class point {
 	constructor (x, y) {
@@ -27,6 +28,7 @@ function point_distance (point1, point2) {
 }
 
 // -- rect --------------------------------------------------------------------
+// rect defined by x, y, width and height
 
 class rect {
 	constructor (x, y, width, height) {
@@ -95,6 +97,7 @@ function combined_rect_and_point (r, p) {
 }
 
 // -- transform --------------------------------------------------------------------
+// 2d affine transform, but not defined using a matrix
 
 class transform {
 	constructor (x, y, scale_x, scale_y, rotation, alpha) {
@@ -166,6 +169,7 @@ class transform {
 const default_transform = transform.identity();
 
 // -- color --------------------------------------------------------------------
+// colour class to share and link to drawing commands, 0 - 1 rgba
 
 class color {
 	constructor (r, g, b, alpha) {
@@ -189,6 +193,8 @@ color.black = new color(0, 0, 0, 1);
 color.clear = new color(0, 0, 0, 0);
 
 // -- font --------------------------------------------------------------------
+// font class to link to canvas drawing commands
+// also provides measurement and line breaking
 
 class font {
 	constructor (ctx, size, name, align, baseline) {
@@ -322,6 +328,8 @@ class font {
 }
 
 // -- image data --------------------------------------------------------------------
+// define regions and sprites within larger textures, mostly for loading from external
+// texture maps
 
 class image_data {
 	constructor (name, texture, xy, uv) {
@@ -337,9 +345,11 @@ class image_data {
 	}
 }
 
-// -- clip data --------------------------------------------------------------------
+// -- animations data --------------------------------------------------------------------
 
-// -- unexported classes --
+// -- clip entry --------------------------------------------------------------------
+// not exported, refers to the position of one child object within one frame of an animation
+
 class clip_entry extends transform {
 	constructor (instance_name, x, y, scale_x, scale_y, rotation, alpha) {
 		super(
@@ -365,8 +375,10 @@ class clip_entry extends transform {
 		entry.frame_no = frame_no;
 		return entry;
 	}
-
 }
+
+// -- clip frame --------------------------------------------------------------------
+// not exported, aggregate of all entries for a frame, and a label
 
 class clip_frame {
 	constructor (label) {
@@ -403,11 +415,14 @@ class clip_frame {
 	}
 }
 
+// -- clip data --------------------------------------------------------------------
+// animation sequence, with nested clips
+
 class clip_data {
 	constructor (name) {
 		this.name = name;
 		this.frames = [];
-		this.labels = {};
+		this.labels = new Map();
 	}
 
 	add_frame (label) {
