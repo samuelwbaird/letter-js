@@ -10,15 +10,15 @@ const cache = new Map();
 const all_image_data = new Map();
 const all_clip_data = new Map();
 
-const get_image_data = function (name) {
+function get_image_data (name) {
 	return all_image_data.get(name);
-};
+}
 
-const get_clip_data = function (name) {
+function get_clip_data (name) {
 	return all_clip_data.get(name);
-};
+}
 
-const get_combined_clip_data = function (from_clips) {
+function get_combined_clip_data (from_clips) {
 	// combine multiple clips, using the clip name as a default label where one does not exist
 	const combined_clip_data = new geometry.clip_data();
 	for (const clip_name of from_clips) {
@@ -38,15 +38,15 @@ const get_combined_clip_data = function (from_clips) {
 	}
 	combined_clip_data.link_resources();
 	return combined_clip_data;
-};
+}
 
-const create_combined_clip_data = function (name, clips) {
+function create_combined_clip_data (name, clips) {
 	all_clip_data.set(name, get_combined_clip_data(clips));
 	all_clip_data.get(name).name = name;
 	return all_clip_data.get(name);
-};
+}
 
-const get_cached = function (type, name, url, retrieve_callback) {
+function get_cached (type, name, url, retrieve_callback) {
 	const key = type + ':' + name + ':' + url;
 	let entry = cache.get(key);
 	if (entry == null) {
@@ -65,13 +65,13 @@ const get_cached = function (type, name, url, retrieve_callback) {
 	if (entry.loaded) {
 		return entry.object;
 	}
-};
+}
 
-const clear_cached = function (entry) {
+function clear_cached (entry) {
 	cache.delete(entry.key);
-};
+}
 
-const require_image = function (url) {
+function require_image (url) {
 	return get_cached('image', url, url, (entry) => {
 		entry.object = new Image();
 		entry.object.onload = function () {
@@ -82,9 +82,9 @@ const require_image = function (url) {
 		};
 		entry.object.src = url;
 	});
-};
+}
 
-const require_json = function (url) {
+function require_json (url) {
 	return get_cached('json', url, url, (entry) => {
 		const xhr = new XMLHttpRequest();
 		xhr.open('GET', url, true);
@@ -102,9 +102,9 @@ const require_json = function (url) {
 		};
 		xhr.send();
 	});
-};
+}
 
-const require_text = function (url) {
+function require_text (url) {
 	return get_cached('text', url, url, (entry) => {
 		const xhr = new XMLHttpRequest();
 		xhr.open('GET', url, true);
@@ -122,9 +122,9 @@ const require_text = function (url) {
 		};
 		xhr.send();
 	});
-};
+}
 
-const require_asset = function (base_url, name) {
+function require_asset (base_url, name) {
 	return get_cached('asset', name, base_url + name, (entry) => {
 		// first make sure we have the data needed
 		const json = require_json(base_url + name + '_description.json');
@@ -233,9 +233,9 @@ const require_asset = function (base_url, name) {
 			});
 		}
 	});
-};
+}
 
-const require_assets = function (base_url, names) {
+function require_assets (base_url, names) {
 	// return true if all requested assets are available
 	let available = true;
 	for (const name of names) {
@@ -244,6 +244,6 @@ const require_assets = function (base_url, names) {
 		}
 	}
 	return available;
-};
+}
 
 export { require_asset, require_assets, require_json, require_image, require_text, get_image_data, get_clip_data, create_combined_clip_data, get_combined_clip_data };
