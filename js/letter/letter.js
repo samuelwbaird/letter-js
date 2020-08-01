@@ -8,6 +8,7 @@ import * as resources from './resources.js';
 import * as query from './query.js';
 import * as tween from './tween.js';
 import * as touch_area from './touch_area.js';
+import * as display_list from './display_list.js';
 import * as button from './button.js';
 
 function launch (scene_name) {
