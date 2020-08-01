@@ -3,7 +3,10 @@
 
 import * as geometry from './geometry.js';
 import * as dispatch from './dispatch.js';
+import * as event_dispatch from './event_dispatch.js';
 import * as resources from './resources.js';
+import * as query from './query.js';
+import * as tween from './tween.js';
 
 function launch (scene_name) {
 	alert('launchy! ' + scene_name);

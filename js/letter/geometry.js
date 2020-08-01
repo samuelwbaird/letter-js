@@ -433,14 +433,14 @@ class clip_data {
 
 	link_resources (resources) {
 		// generate start and end points for all labels during this pass
-		this.labels['all'] = { start_frame : 1, end_frame: this.frames.length };
+		this.labels.set('all', { start_frame : 1, end_frame: this.frames.length });
 		let tracking_label = null;
 		let frame_no = 0;
 		for (const frame of this.frames) {
 			frame_no++;
 			if (frame.label) {
 				tracking_label = { start_frame : frame_no, end_frame : frame_no };
-				this.labels[frame.label] = tracking_label;
+				this.labels.set(frame.label, tracking_label);
 			} else if (tracking_label) {
 				tracking_label.end_frame = frame_no;
 			}
