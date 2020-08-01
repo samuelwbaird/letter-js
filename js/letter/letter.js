@@ -7,6 +7,8 @@ import * as event_dispatch from './event_dispatch.js';
 import * as resources from './resources.js';
 import * as query from './query.js';
 import * as tween from './tween.js';
+import * as touch_area from './touch_area.js';
+import * as button from './button.js';
 
 function launch (scene_name) {
 	alert('launchy! ' + scene_name);
