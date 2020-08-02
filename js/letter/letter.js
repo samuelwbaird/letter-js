@@ -10,6 +10,7 @@ import * as tween from './tween.js';
 import * as touch_area from './touch_area.js';
 import * as display_list from './display_list.js';
 import * as button from './button.js';
+import * as app_node from './app_node.js';
 
 function launch (scene_name) {
 	alert('launchy! ' + scene_name);
