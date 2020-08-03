@@ -1,7 +1,6 @@
 // standard heavy weight object used to create a back bone heirachy of objects at runtime
 // copyright 2020 Samuel Baird MIT Licence
 
-
 import * as geometry from './geometry.js';
 import * as dispatch from './dispatch.js';
 import * as tween from './tween.js';
