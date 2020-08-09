@@ -171,8 +171,8 @@ function require_asset (base_url, name) {
 
 		// create clip_data object for each clip_data
 		const clips_added = [];
-		if (entry.description.clips) {
-			for (const clip of entry.description) {
+		if (entry.description.clips && Array.isArray(entry.description.clips)) {
+			for (const clip of entry.description.clips) {
 				const clip_data = new geometry.clip_data(clip.name);
 				for (const frame of clip.frames) {
 					// special case where each frame is only a single image

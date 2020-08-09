@@ -202,7 +202,7 @@ class display_list extends geometry.transform {
 			temporary_ctx.clearRect(0, 0, this.frozen_image_canvas.width, this.frozen_image_canvas.height);
 		}
 
-		const transform = geometry.default_transform();
+		const transform = geometry.default_transform;
 
 		transform.x = -this.frozen_bounds.x * scale_factor;
 		transform.y = -this.frozen_bounds.y * scale_factor;
@@ -657,7 +657,7 @@ class label extends display_list {
 }
 
 // set up add methods from each class to each other class
-const klasses = {
+const class_list = {
 	'display_list' : display_list,
 	'image' : image,
 	'clip' : clip,
@@ -667,22 +667,15 @@ const klasses = {
 	'label' : label,
 };
 
-const augment = function (class1, class2, name) {
-	const unpack_version = function (packed) {
-		class2.prototype.init.apply(this, packed);
-	};
-	unpack_version.prototype = class2.prototype;
-
-	class1.prototype['add_' + name] = function () {
-		const child = new unpack_version(arguments);
-		this.add(child);
-		return child;
-	};
-};
-
-for (const k in klasses) {
-	for (const s in klasses) {
-		augment(klasses[k], klasses[s], s);
+for (const this_class_name in class_list) {
+	const this_class = class_list[this_class_name];
+	for (const other_class_name in class_list) {
+		const other_class = class_list[other_class_name];
+		this_class.prototype['add_' + other_class_name] = function () {
+			const child = new other_class(...arguments);
+			this.add(child);
+			return child;
+		}
 	}
 }
 

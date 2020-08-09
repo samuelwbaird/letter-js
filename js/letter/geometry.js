@@ -336,8 +336,8 @@ class image_data {
 		this.name = name;
 		this.texture = texture;
 
-		this.source_rect = rect(uv[0] * texture.width, uv[1] * texture.height, (uv[2] - uv[0]) * texture.width, (uv[3] - uv[1]) * texture.height);
-		this.dest_rect = rect(xy[0], xy[1], xy[2] - xy[0], xy[3] - xy[1]);
+		this.source_rect = new rect(uv[0] * texture.width, uv[1] * texture.height, (uv[2] - uv[0]) * texture.width, (uv[3] - uv[1]) * texture.height);
+		this.dest_rect = new rect(xy[0], xy[1], xy[2] - xy[0], xy[3] - xy[1]);
 	}
 
 	bounds  () {
@@ -364,13 +364,13 @@ class clip_entry extends transform {
 	}
 
 	static image_data (instance_name, image_data, x, y, scale_x, scale_y, rotation, alpha) {
-		const entry = clip_entry(instance_name, x, y, scale_x, scale_y, rotation, alpha);
+		const entry = new clip_entry(instance_name, x, y, scale_x, scale_y, rotation, alpha);
 		entry.image_data = image_data;
 		return entry;
 	}
 
 	static clip_data (instance_name, clip_data, x, y, scale_x, scale_y, rotation, alpha, frame_no) {
-		const entry = clip_entry(instance_name, x, y, scale_x, scale_y, rotation, alpha);
+		const entry = new clip_entry(instance_name, x, y, scale_x, scale_y, rotation, alpha);
 		entry.clip_data = clip_data;
 		entry.frame_no = frame_no;
 		return entry;

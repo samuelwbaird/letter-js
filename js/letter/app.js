@@ -5,8 +5,9 @@ import * as geometry from './geometry.js';
 import * as dispatch from './dispatch.js';
 import * as event_dispatch from './event_dispatch.js';
 import * as resources from './resources.js';
-import * as display_list from './display_list.js';
-import * as button from './button.js';
+
+import display_list from './display_list.js';
+import button from './button.js';
 
 class fixed_rate_timer {
 
@@ -182,7 +183,7 @@ class screen {
 		this.ideal_height = ideal_height;
 		this.ideal_width = ideal_width;
 		this.fit = fit;
-		this.root_view = new display_list.display_list();
+		this.root_view = new display_list();
 
 		this.update();
 
@@ -250,7 +251,7 @@ class screen {
 
 	render () {
 		this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-		this.root_view.render(this.ctx, geometry.default_transform());
+		this.root_view.render(this.ctx, geometry.default_transform);
 	}
 
 }

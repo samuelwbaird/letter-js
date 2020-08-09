@@ -4,14 +4,15 @@
 import * as geometry from './geometry.js';
 import * as dispatch from './dispatch.js';
 import * as tween from './tween.js';
-import * as touch_area from './touch_area.js';
-import * as display_list from './display_list.js';
-import * as button from './button.js';
+
+import touch_area from './touch_area.js';
+import display_list from './display_list.js';
+import button from './button.js';
 
 class app_node {
 
 	constructor () {
-		this.view = new display_list.display_list();
+		this.view = new display_list();
 
 		this.tween_manager = null;
 		this.frame_dispatch = null;
