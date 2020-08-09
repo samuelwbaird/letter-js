@@ -7,9 +7,14 @@ import * as event_dispatch from './event_dispatch.js';
 import * as resources from './resources.js';
 import * as query from './query.js';
 import * as tween from './tween.js';
+
 import touch_area from './touch_area.js';
 import display_list from './display_list.js';
 import button from './button.js';
 import app_node from './app_node.js';
 
-export { geometry, dispatch, event_dispatch, resources, query, tween, touch_area, display_list, button, app_node };
+import * as app from './app.js';
+
+const launch = app.launch;
+
+export { geometry, dispatch, event_dispatch, resources, query, tween, touch_area, display_list, button, app_node, app, launch };

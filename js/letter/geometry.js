@@ -71,7 +71,7 @@ function expanded_rect (r, pad_x, pad_y) {
 }
 
 function combined_rect_and_point (r, p) {
-	if (rect == null) {
+	if (r == null) {
 		return new rect(p.x, p.y, 0, 0);
 	}
 
@@ -400,7 +400,7 @@ class clip_frame {
 		if (!instance_name) {
 			instance_name = this.generate_instance_name('img_' + image_data.name, image_data);
 		}
-		const entry = clip_entry.image_data(image_data, x, y, scale_x, scale_y, rotation, alpha);
+		const entry = clip_entry.image_data(instance_name, image_data, x, y, scale_x, scale_y, rotation, alpha);
 		this.content.push(entry);
 		return this;
 	}

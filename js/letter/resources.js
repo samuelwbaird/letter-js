@@ -191,7 +191,7 @@ function require_asset (base_url, name) {
 								if (entry.image) {
 									frame_data.add_image_content(
 										entry.name,
-										entry.image,
+										entry.image, // all_image_data.get(entry.image),
 										entry.transform[0],
 										entry.transform[1],
 										entry.transform[2],
@@ -202,7 +202,7 @@ function require_asset (base_url, name) {
 								} else if (entry.clip) {
 									frame_data.add_clip_content(
 										entry.name,
-										entry.image,
+										entry.clip, //all_clip_data(entry.clip),
 										entry.transform[0],
 										entry.transform[1],
 										entry.transform[2],

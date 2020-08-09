@@ -83,9 +83,9 @@ class app {
 		// if a string reference then load before continuing
 		if (typeof scene == 'string') {
 			/* eslint-disable */
-			// import(scene).then((loaded_scene_class) => {
-			// 	this.set_scene(new loaded_scene_class());
-			// 		    });
+			import(scene).then((loaded_scene_class) => {
+				this.set_scene(new loaded_scene_class());
+		    });
 			return;
 			/* eslint-enable */
 		}

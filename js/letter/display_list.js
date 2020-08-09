@@ -130,7 +130,7 @@ class display_list extends geometry.transform {
 							child.transform_point(new geometry.point(sub_rect.x + sub_rect.width, sub_rect.y + sub_rect.height)),
 						];
 						for (let j = 0; j < 4; j++) {
-							rect = geometry.expanded_rect_to_include_point(rect, points[j]);
+							rect = geometry.combined_rect_and_point(rect, points[j]);
 						}
 					}
 				}
@@ -149,7 +149,7 @@ class display_list extends geometry.transform {
 			];
 			const ref = reference.world_transform();
 			for (let j = 0; j < 4; j++) {
-				rect = geometry.expanded_rect_to_include_point(rect, geometry.untransform_point(ref, points[j]));
+				rect = geometry.combined_rect_and_point(rect, geometry.untransform_point(ref, points[j]));
 			}
 			return rect;
 		}
@@ -477,6 +477,8 @@ class clip extends display_list {
 					if (!content.frame_no) {
 						child.play();
 					}
+				} else {
+					throw 'unknown content type in animation';
 				}
 				child.parent = this;
 				this.children[index] = child;
@@ -675,7 +677,7 @@ for (const this_class_name in class_list) {
 			const child = new other_class(...arguments);
 			this.add(child);
 			return child;
-		}
+		};
 	}
 }
 

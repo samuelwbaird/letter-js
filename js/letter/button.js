@@ -1,7 +1,7 @@
 // adds two frame button behaviour to an animated display object
 // copyright 2020 Samuel Baird MIT Licence
 
-import * as touch_area from  './touch_area.js';
+import touch_area from  './touch_area.js';
 
 // configure these with later static method
 
@@ -60,7 +60,7 @@ class button {
 			this.update();
 		};
 		this.touch_area_outer.on_touch_end = () => {
-			this.update();
+			this.handle_button_release();
 		};
 	}
 
