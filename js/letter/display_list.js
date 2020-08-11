@@ -202,7 +202,7 @@ class display_list extends geometry.transform {
 			temporary_ctx.clearRect(0, 0, this.frozen_image_canvas.width, this.frozen_image_canvas.height);
 		}
 
-		const transform = geometry.default_transform;
+		const transform = geometry.transform.identity();
 
 		transform.x = -this.frozen_bounds.x * scale_factor;
 		transform.y = -this.frozen_bounds.y * scale_factor;
@@ -583,9 +583,9 @@ class label extends display_list {
 	constructor (font, text, color, init_values) {
 		super(init_values);
 
-		// TODO: set word_wrap to a number to wrap lines at a maximum length
-		this.word_wrap = undefined;
-		this.vertical_align = 'center';
+		// set word_wrap to a number to wrap lines at a maximum length
+		// this.word_wrap = undefined;
+		this.vertical_align = (this.vertical_align != null ? this.vertical_align : 'center');
 
 		this.font = font;
 		this.text = text;
@@ -646,7 +646,7 @@ class label extends display_list {
 		const bounds = geometry.expanded_rect(font_bounds, font_bounds.padding, font_bounds.padding);
 
 		// adjust for vertical_align
-		if (this.vertical_align == 'center') {
+		if (this.vertical_align == 'center' || this.vertical_align == 'middle') {
 			bounds.y -= (font_bounds.lines.length - 1) * 0.5 * font_bounds.line_height;
 		} else if (this.vertical_align == 'top') {
 			bounds.y += font_bounds.line_height * 0.5;

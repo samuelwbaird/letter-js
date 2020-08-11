@@ -81,14 +81,14 @@ class app {
 		event_dispatch.reset_shared_instance();
 
 		// if a string reference then load before continuing
+		/* not sure if this should actually be supported here
 		if (typeof scene == 'string') {
-			/* eslint-disable */
-			import(scene).then((loaded_scene_class) => {
+		import(scene).then((loaded_scene_class) => {
 				this.set_scene(new loaded_scene_class());
-		    });
+			});
 			return;
-			/* eslint-enable */
 		}
+		*/
 
 		if (scene) {
 			this.last_time = null;
@@ -251,7 +251,7 @@ class screen {
 
 	render () {
 		this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-		this.root_view.render(this.ctx, geometry.default_transform);
+		this.root_view.render(this.ctx, geometry.transform.identity());
 	}
 
 }

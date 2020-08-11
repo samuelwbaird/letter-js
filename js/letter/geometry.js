@@ -166,8 +166,6 @@ class transform {
 	}
 }
 
-const default_transform = transform.identity();
-
 // -- color --------------------------------------------------------------------
 // colour class to share and link to drawing commands, 0 - 1 rgba
 
@@ -458,4 +456,4 @@ class clip_data {
 	}
 }
 
-export { point, rect, transform, default_transform, point_distance, expanded_rect, combined_rect_and_point, color, font, image_data, clip_data };
+export { point, rect, transform, point_distance, expanded_rect, combined_rect_and_point, color, font, image_data, clip_data };
