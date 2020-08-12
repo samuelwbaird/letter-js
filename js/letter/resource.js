@@ -1,4 +1,4 @@
-// manage loading and caching resources
+// manage loading and caching resource
 // query wraps basic get and post requests with success and failure callbacks
 // require_asset() will return null but will also trigger the asset to be loaded
 // keep calling require_asset() on a frame timer until the asset is ready
@@ -50,7 +50,7 @@ const query = {
 	},
 };
 
-// -- local cache of resources ---------------------
+// -- local cache of resource ---------------------
 const cache = new Map();
 const all_image_data = new Map();
 const all_clip_data = new Map();
@@ -81,7 +81,7 @@ function get_combined_clip_data (from_clips) {
 			combined_clip_data.frames.push(frame);
 		}
 	}
-	combined_clip_data.link_resources();
+	combined_clip_data.link_resource();
 	return combined_clip_data;
 }
 
@@ -272,7 +272,7 @@ function require_asset (base_url, name) {
 		// re-link all image_data or clip_data in the asset bundles from name to data
 		// create frame label entries for all clips with start and end points
 		for (const cd of clips_added) {
-			cd.link_resources({
+			cd.link_resource({
 				get_image_data : get_image_data,
 				get_clip_data : get_clip_data,
 			});

@@ -4,7 +4,7 @@
 
 import * as geometry from './geometry.js';
 import * as dispatch from './dispatch.js';
-import * as resources from './resources.js';
+import * as resource from './resource.js';
 import * as display from './display.js';
 import * as ui from './ui.js';
 import * as tween from './tween.js';
@@ -40,7 +40,7 @@ class node {
 		this.children.add(child);
 
 		child.app = this.app;
-		child.resources = this.resources;
+		child.resource = this.resource;
 		child.screen = this.screen;
 		child.prepare();
 
@@ -186,7 +186,7 @@ class app {
 		this.fps = new fixed_rate_timer(60);
 		this.animation_fps = new fixed_rate_timer(60);
 		this.safe_updates = false;
-		this.resources = resources;
+		this.resource = resource;
 
 		this.dispatch = new dispatch.frame_dispatch();
 		this.current_scene = null;
@@ -209,7 +209,7 @@ class app {
 			this.last_time = null;
 			this.current_scene = scene;
 			this.current_scene.app = this;
-			this.current_scene.resources = resources;
+			this.current_scene.resource = resource;
 			this.current_scene.screen = this.screen;
 
 			this.current_scene.prepare();

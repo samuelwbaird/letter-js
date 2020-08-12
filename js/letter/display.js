@@ -2,7 +2,7 @@
 // copyright 2020 Samuel Baird MIT Licence
 
 import * as geometry from  './geometry.js';
-import * as resources from './resources.js';
+import * as resource from './resource.js';
 
 class display_list extends geometry.transform {
 	constructor (init_values) {
@@ -286,7 +286,7 @@ class image extends display_list {
 		super(init_values);
 
 		if (typeof image_data_or_name == 'string') {
-			this.image_data = resources.get_image_data(image_data_or_name);
+			this.image_data = resource.get_image_data(image_data_or_name);
 		} else {
 			this.image_data = image_data_or_name;
 		}
@@ -319,7 +319,7 @@ class clip extends display_list {
 		this.children = [];
 
 		if (typeof clip_data_or_name == 'string') {
-			this.clip_data = resources.get_clip_data(clip_data_or_name);
+			this.clip_data = resource.get_clip_data(clip_data_or_name);
 		} else {
 			this.clip_data = clip_data_or_name;
 		}

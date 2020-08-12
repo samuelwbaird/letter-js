@@ -429,7 +429,7 @@ class clip_data {
 		return frame;
 	}
 
-	link_resources (resources) {
+	link_resource (resource) {
 		// generate start and end points for all labels during this pass
 		this.labels.set('all', { start_frame : 1, end_frame: this.frames.length });
 		let tracking_label = null;
@@ -446,10 +446,10 @@ class clip_data {
 			// -- link image_data and clip_data objects directly
 			for (const c of frame.content) {
 				if (c.image_data && typeof c.image_data == 'string') {
-					c.image_data = resources.get_image_data(c.image_data);
+					c.image_data = resource.get_image_data(c.image_data);
 				}
 				if (c.clip_data && typeof c.clip_data == 'string') {
-					c.clip_data = resources.get_clip_data(c.clip_data);
+					c.clip_data = resource.get_clip_data(c.clip_data);
 				}
 			}
 		}
