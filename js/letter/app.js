@@ -1,56 +1,181 @@
+// node, standard heavy weight object used to create a back bone heirachy of objects at runtime
 // an app object, a single instance of which is created at launch, managing timer, events and screen fit
-// copyright 20202 Samuel Baird MIT Licence
+// copyright 2020 Samuel Baird MIT Licence
 
 import * as geometry from './geometry.js';
 import * as dispatch from './dispatch.js';
-import * as event_dispatch from './event_dispatch.js';
 import * as resources from './resources.js';
+import * as display from './display.js';
+import * as ui from './ui.js';
+import * as tween from './tween.js';
 
-import display_list from './display_list.js';
-import button from './button.js';
+class node {
 
-class fixed_rate_timer {
+	constructor () {
+		this.view = new display.display_list();
 
-	constructor (fps, min_frames, max_frames, reset_frames) {
-		this.set_fps(fps, min_frames, max_frames, reset_frames);
+		this.tween_manager = null;
+		this.frame_dispatch = null;
+		this.use_safe_updates = false;
+
+		this.children = null;
+		this.disposables = null;
 	}
 
-	set_fps (fps, min_frames = 1, max_frames = 4, reset_frames = 16) {
-		this.fps = fps;
-		this.min_frames = min_frames;
-		this.max_frames = max_frames;
-		this.reset_frames = reset_frames;
-		this.reset();
+	add_disposable (disposable) {
+		if (!this.disposables) {
+			this.disposables = [];
+		}
+		this.disposables.push(disposable);
 	}
 
-	reset () {
-		this.last_time = Date.now();
-		this.time_accumulated = 0;
+	// override
+	prepare () {}
+	begin () {}
+
+	add (child, view_parent) {
+		if (!this.children) {
+			this.children = new dispatch.update_list();
+		}
+		this.children.add(child);
+
+		child.app = this.app;
+		child.resources = this.resources;
+		child.screen = this.screen;
+		child.prepare();
+
+		// view_parent = false to not add, or this nodes view by default
+		if (view_parent == undefined) {
+			view_parent = this.view;
+		}
+		if (view_parent) {
+			view_parent.add(child.view);
+		}
+		// begin is called only once the view is added
+		child.begin();
+
+		return child;
 	}
 
-	get_frames_due () {
-		const now = Date.now();
-		const delta = (now - this.last_time) / 1000.0;
-		this.time_accumulated += delta;
-		this.last_time = now;
+	remove (child) {
+		if (!this.children) {
+			return;
+		}
+		if (this.children.remove(child)) {
+			child.dispose();
+		}
+	}
 
-		let frames_due = Math.floor(this.time_accumulated * this.fps);
+	get_tween_manager () {
+		if (!this.tween_manager) {
+			this.tween_manager = new tween.manager();
+		}
+		return this.tween_manager;
+	}
 
-		if (this.reset_frames > 0 && frames_due > this.reset_frames) {
-			this.time_accumulated = 0;
-			frames_due = 1;
-		} else if (this.max_frames > 0 && frames_due > this.max_frames) {
-			this.time_accumulated = 0;
-			frames_due = this.max_frames;
-		} else if (this.min_frames > 0 && frames_due < this.min_frames) {
-			frames_due = 0;
-		} else {
-			this.time_accumulated -= frames_due / this.fps;
+	tween (target, easing, properties, optional_params) {
+		const t = new tween.tween(target, easing, properties, optional_params);
+		this.get_tween_manager().add(t);
+		return t;
+	}
+
+	get_frame_dispatch () {
+		if (!this.frame_dispatch) {
+			this.frame_dispatch = new dispatch.frame_dispatch();
+		}
+		return this.frame_dispatch;
+	}
+
+	delay (count, fn, tag) {
+		this.get_frame_dispatch().delay(count, fn, tag);
+	}
+
+	add_button (clip, action, event_dispatch, init_values) {
+		const btn = new ui.button(clip, action, event_dispatch, init_values);
+		this.add_disposable(btn);
+		return btn;
+	}
+
+	add_touch_area (display_object, padding, event_dispatch) {
+		const ta = ui.touch_area.bounds(display_object, padding, event_dispatch);
+		this.add_disposable(ta);
+		return ta;
+	}
+
+	add_touch_area_rect (display_object, x, y, width, height, event_dispatch) {
+		const ta = ui.touch_area.rect(display_object, geometry.rect(x, y, width, height), event_dispatch);
+		this.add_disposable(ta);
+		return ta;
+	}
+
+	update () {
+		if (this.use_safe_updates) {
+			this.safe_update();
+			return;
 		}
 
-		return frames_due;
+		if (this.tween_manager) {
+			this.tween_manager.update();
+		}
+		if (this.frame_dispatch) {
+			this.frame_dispatch.update();
+		}
+		if (this.children) {
+			this.children.update((child) => {
+				child.update();
+			});
+		}
 	}
 
+	safe_update () {
+		if (this.tween_manager) {
+			this.tween_manager.safe_update();
+		}
+		if (this.frame_dispatch) {
+			this.frame_dispatch.safe_update();
+		}
+		if (this.children) {
+			this.children.safe_update((child) => {
+				child.safe_update();
+			});
+		}
+	}
+
+	dispose () {
+		if (this.view) {
+			this.view.remove_from_parent();
+		}
+
+		if (this.children) {
+			this.children.update((child) => {
+				child.dispose();
+			});
+			this.children = null;
+		}
+
+		if (this.tween_manager) {
+			this.tween_manager.dispose();
+			this.tween_manager = null;
+		}
+
+		if (this.frame_dispatch) {
+			this.frame_dispatch.dispose();
+			this.frame_dispatch = null;
+		}
+
+		if (this.disposables) {
+			for (const disposable of this.disposables) {
+				if (typeof disposable == 'function') {
+					disposable();
+				} else if (disposable.dispose) {
+					disposable.dispose();
+				} else {
+					throw 'cannot dispose ' + disposable;
+				}
+			}
+			this.disposables = null;
+		}
+	}
 }
 
 class app {
@@ -66,7 +191,7 @@ class app {
 		this.dispatch = new dispatch.frame_dispatch();
 		this.current_scene = null;
 
-		button.configure((action) => {
+		ui.button.configure((action) => {
 			this.dispatch.delay(1, action);
 		});
 	}
@@ -78,17 +203,7 @@ class app {
 		}
 
 		// can't clear event dispatch here in case of things hooked globally, might be a problem for button callbacks
-		event_dispatch.reset_shared_instance();
-
-		// if a string reference then load before continuing
-		/* not sure if this should actually be supported here
-		if (typeof scene == 'string') {
-		import(scene).then((loaded_scene_class) => {
-				this.set_scene(new loaded_scene_class());
-			});
-			return;
-		}
-		*/
+		dispatch.reset_shared_event_dispatch();
 
 		if (scene) {
 			this.last_time = null;
@@ -130,7 +245,7 @@ class app {
 			}
 		}
 
-		event_dispatch.shared_instance().dispatch_deferred();
+		dispatch.shared_event_dispatch().dispatch_deferred();
 		if (this.safe_updates) {
 			this.dispatch.safe_update();
 		} else {
@@ -176,86 +291,6 @@ class app {
 
 }
 
-class screen {
-	constructor (canvas, ideal_width, ideal_height, fit) {
-		this.canvas = canvas;
-		this.ctx = canvas.getContext('2d');
-		this.ideal_height = ideal_height;
-		this.ideal_width = ideal_width;
-		this.fit = fit;
-		this.root_view = new display_list();
-
-		this.update();
-
-		canvas.addEventListener('mousedown', (evt) => {
-			this.touch_event('touch_begin', evt);
-		}, false);
-		canvas.addEventListener('mousemove', (evt) => {
-			this.touch_event('touch_move', evt);
-		}, false);
-		canvas.addEventListener('mouseup', (evt) => {
-			this.touch_event('touch_end', evt);
-		}, false);
-
-		canvas.addEventListener('touchstart', (evt) => {
-			this.touch_event('touch_begin', evt);
-		}, false);
-		canvas.addEventListener('touchmove', (evt) => {
-			this.touch_event('touch_move', evt);
-		}, false);
-		canvas.addEventListener('touchend', (evt) => {
-			this.touch_event('touch_end', evt);
-		}, false);
-		canvas.addEventListener('touchcancel', (evt) => {
-			this.touch_event('touch_cancel', evt);
-		}, false);
-	}
-
-	touch_event (event_name, evt) {
-		evt.preventDefault();
-
-		// correct co-ords for hdpi displays
-		const scale_x = this.canvas.width / this.canvas.clientWidth;
-		const scale_y = this.canvas.height / this.canvas.clientHeight;
-
-		if (evt.changedTouches) {
-			for (const touch of evt.changedTouches) {
-				event_dispatch.shared_instance().defer(event_name, { id : touch.identifier, time : Date.now, x : (touch.pageX - this.canvas.offsetLeft) * scale_x, y : (touch.pageY - this.canvas.offsetTop) * scale_y });
-			}
-		} else {
-			event_dispatch.shared_instance().defer(event_name, { id : 1, time : Date.now, x : (evt.pageX - this.canvas.offsetLeft) * scale_x, y : (evt.pageY - this.canvas.offsetTop) * scale_y });
-		}
-	}
-
-	update () {
-		// update transform of root view to match sizing
-
-		// update scaling to fit nominal sizing to canvas size
-		const scale_x = this.canvas.width / this.ideal_width;
-		const scale_y = this.canvas.height / this.ideal_height;
-		let scale = 1;
-
-		if (this.fit == 'fit') {
-			scale = (scale_x < scale_y) ? scale_x : scale_y;
-		} else {
-			// other screenfit strategies
-		}
-
-		this.content_scale = scale;
-		this.width = this.canvas.width / scale;
-		this.height = this.canvas.height / scale;
-
-		this.root_view.scale_x = scale;
-		this.root_view.scale_y = scale;
-	}
-
-	render () {
-		this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-		this.root_view.render(this.ctx, geometry.transform.identity());
-	}
-
-}
-
 class timer {
 
 	constructor () {
@@ -290,19 +325,63 @@ class timer {
 
 }
 
+class fixed_rate_timer {
+
+	constructor (fps, min_frames, max_frames, reset_frames) {
+		this.set_fps(fps, min_frames, max_frames, reset_frames);
+	}
+
+	set_fps (fps, min_frames = 1, max_frames = 4, reset_frames = 16) {
+		this.fps = fps;
+		this.min_frames = min_frames;
+		this.max_frames = max_frames;
+		this.reset_frames = reset_frames;
+		this.reset();
+	}
+
+	reset () {
+		this.last_time = Date.now();
+		this.time_accumulated = 0;
+	}
+
+	get_frames_due () {
+		const now = Date.now();
+		const delta = (now - this.last_time) / 1000.0;
+		this.time_accumulated += delta;
+		this.last_time = now;
+
+		let frames_due = Math.floor(this.time_accumulated * this.fps);
+
+		if (this.reset_frames > 0 && frames_due > this.reset_frames) {
+			this.time_accumulated = 0;
+			frames_due = 1;
+		} else if (this.max_frames > 0 && frames_due > this.max_frames) {
+			this.time_accumulated = 0;
+			frames_due = this.max_frames;
+		} else if (this.min_frames > 0 && frames_due < this.min_frames) {
+			frames_due = 0;
+		} else {
+			this.time_accumulated -= frames_due / this.fps;
+		}
+
+		return frames_due;
+	}
+
+}
+
+
+
 function launch (canvas, scene, width, height, fit) {
-	const _screen = (canvas != null) ? new screen(canvas, width, height, fit) : null;
+	const screen = (canvas != null) ? new ui.canvas_screen(canvas, width, height, fit) : null;
 
 	const _timer = new timer();
-	const _app = new app(_screen, _timer);
+	const _app = new app(screen, _timer);
 
 	window.app = _app;
-	window.resources = resources;
 
 	_app.set_scene(scene);
 	_app.resume();
 	return _app;
 }
 
-export { fixed_rate_timer, app, screen, timer, launch };
-export default app;
+export { node, fixed_rate_timer, app, timer, launch };

@@ -2,12 +2,12 @@
 // and 2 frame animation used to create a button
 // copyright 2020 Samuel Baird MIT Licence
 
-import { geometry, tween, app_node } from '../letter/letter.js';
+import { geometry, resources, tween, app } from '../letter/letter.js';
 
-class title_scene extends app_node {
+class title_scene extends app.node {
 	prepare () {
-		window.app.resources.require_asset('example_assets/', 'map_x1');
-		window.app.resources.require_asset('example_assets/', 'test_x1');
+		resources.require_asset('example_assets/', 'map_x1');
+		resources.require_asset('example_assets/', 'test_x1');
 	}
 
 	begin () {

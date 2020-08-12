@@ -1,9 +1,54 @@
 // manage loading and caching resources
+// query wraps basic get and post requests with success and failure callbacks
 // require_asset() will return null but will also trigger the asset to be loaded
 // keep calling require_asset() on a frame timer until the asset is ready
 // copyright 2020 Samuel Baird MIT Licence
 
 import * as geometry from './geometry.js';
+
+// internal functions
+function _query (method, url, data, successHandler, errorHandler, timeout) {
+	const xhr = new XMLHttpRequest();
+
+	xhr.open(method, url, true);
+	xhr.onreadystatechange = function () {
+		let status;
+		let data;
+		if (xhr.readyState == 4) { // `DONE`
+			status = xhr.status;
+			if (status == 200) {
+				if (xhr.responseText != '') {
+					data = JSON.parse(xhr.responseText);
+				}
+				successHandler && successHandler(data);
+			} else {
+				errorHandler && errorHandler(status);
+			}
+		}
+	};
+	if (timeout != undefined) {
+		xhr.timeout = timeout;
+	}
+
+	if (data != null) {
+		xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+		xhr.send(JSON.stringify(data));
+	} else {
+		xhr.send();
+	}
+
+	return xhr;
+}
+
+// public api
+const query = {
+	post: function (url, data, successHandler, errorHandler) {
+		return _query('post', url, data, successHandler, errorHandler);
+	},
+	get: function (url, successHandler, errorHandler) {
+		return _query('get', url, null, successHandler, errorHandler);
+	},
+};
 
 // -- local cache of resources ---------------------
 const cache = new Map();
@@ -246,4 +291,4 @@ function require_assets (base_url, names) {
 	return available;
 }
 
-export { require_asset, require_assets, require_json, require_image, require_text, get_image_data, get_clip_data, create_combined_clip_data, get_combined_clip_data };
+export { query, require_asset, require_assets, require_json, require_image, require_text, get_image_data, get_clip_data, create_combined_clip_data, get_combined_clip_data };

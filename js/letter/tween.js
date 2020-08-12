@@ -162,4 +162,3 @@ class manager {
 
 
 export { easing, tween, manager };
-export default tween;

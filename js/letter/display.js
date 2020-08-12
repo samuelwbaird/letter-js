@@ -658,7 +658,7 @@ class label extends display_list {
 	}
 }
 
-// set up add methods from each class to each other class
+// -- set up add methods from each class to each other class ----
 const class_list = {
 	'display_list' : display_list,
 	'image' : image,
@@ -681,4 +681,4 @@ for (const this_class_name in class_list) {
 	}
 }
 
-export default display_list;
+export { display_list, image, clip, rect, circle, canvas, label };
