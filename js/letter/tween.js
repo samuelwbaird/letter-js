@@ -22,7 +22,6 @@ class easing {
 		});
 	}
 
-
 	static ease_in (frames) {
 		return easing.from_formula(frames, (ratio) => {
 			return ratio * ratio;
@@ -66,7 +65,6 @@ class easing {
 	}
 
 }
-
 
 class tween {
 	constructor (target, easing, properties, optional_params) {
@@ -158,7 +156,7 @@ class manager {
 		this.tweens.clear();
 		this.tweens = null;
 	}
+	
 }
-
 
 export { easing, tween, manager };

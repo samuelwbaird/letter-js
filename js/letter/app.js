@@ -1,10 +1,9 @@
 // node, standard heavy weight object used to create a back bone heirachy of objects at runtime
-// an app object, a single instance of which is created at launch, managing timer, events and screen fit
+// the app module also acts as a single instance of managing current scene, timer, events and screen fit
 // copyright 2020 Samuel Baird MIT Licence
 
 import * as geometry from './geometry.js';
 import * as dispatch from './dispatch.js';
-import * as resource from './resource.js';
 import * as display from './display.js';
 import * as ui from './ui.js';
 import * as tween from './tween.js';
@@ -40,7 +39,6 @@ class node {
 		this.children.add(child);
 
 		child.app = this.app;
-		child.resource = this.resource;
 		child.screen = this.screen;
 		child.prepare();
 
@@ -178,210 +176,130 @@ class node {
 	}
 }
 
-class app {
+// -- app state held within this module ---
 
-	constructor (screen, timer) {
-		this.screen = screen;
-		this.timer = timer;
-		this.fps = new fixed_rate_timer(60);
-		this.animation_fps = new fixed_rate_timer(60);
-		this.safe_updates = false;
-		this.resource = resource;
+let safe_updates = false;
 
-		this.dispatch = new dispatch.frame_dispatch();
-		this.current_scene = null;
+const render_callback = new ui.render_callback();
+const fps = new ui.fixed_rate_timer(60);
+const animation_fps = new ui.fixed_rate_timer(60);
+const frame_dispatch = new dispatch.frame_dispatch();
 
-		ui.button.configure((action) => {
-			this.dispatch.delay(1, action);
-		});
+let screen = null;
+let current_scene = null;
+
+ui.button.configure((action) => {
+	frame_dispatch.delay(1, action);
+});
+
+function update () {
+	// keep up to date with window size
+	if (screen != null) {
+		screen.update();
 	}
 
-	set_scene (scene) {
-		if (this.current_scene != null) {
-			this.current_scene.dispose();
-			this.current_scene = null;
-		}
-
-		// can't clear event dispatch here in case of things hooked globally, might be a problem for button callbacks
-		dispatch.reset_shared_event_dispatch();
-
-		if (scene) {
-			this.last_time = null;
-			this.current_scene = scene;
-			this.current_scene.app = this;
-			this.current_scene.resource = resource;
-			this.current_scene.screen = this.screen;
-
-			this.current_scene.prepare();
-			if (this.screen != null) {
-				this.screen.root_view.add(scene.view);
+	let requires_render = false;
+	const animation_frames = animation_fps.get_frames_due();
+	if (animation_frames > 0 && screen != null) {
+		requires_render = true;
+		for (let i = 0; i < animation_frames; i++) {
+			// update animation heirachy and fire off on-complete events once done
+			const on_completes = [];
+			screen.root_view.update_animated_clips(animation_fps.delta, (callback) => {
+				on_completes.push(callback);
+			});
+			for (const callback of on_completes) {
+				callback();
 			}
-			this.current_scene.begin();
 		}
-
-		this.fps.reset();
-		this.animation_fps.reset();
 	}
 
-	update () {
-		// keep up to date with window size
-		if (this.screen != null) {
-			this.screen.update();
-		}
+	dispatch.shared_event_dispatch().dispatch_deferred();
+	if (safe_updates) {
+		frame_dispatch.safe_update();
+	} else {
+		frame_dispatch.update();
+	}
 
-		let requires_render = false;
-		const animation_frames = this.animation_fps.get_frames_due();
-		if (animation_frames > 0 && this.screen != null) {
-			requires_render = true;
-			for (let i = 0; i < animation_frames; i++) {
-				// update animation heirachy and fire off on-complete events once done
-				const on_completes = [];
-				this.screen.root_view.update_animated_clips(1.0 / this.fps, (callback) => {
-					on_completes.push(callback);
-				});
-				for (const callback of on_completes) {
-					callback();
+	const update_frames = fps.get_frames_due();
+	if (update_frames > 0 && current_scene != null) {
+		requires_render = true;
+		for (let f = 0; f < update_frames; f++) {
+			if (current_scene != null) {
+				if (safe_updates) {
+					current_scene.safe_update();
+				} else {
+					current_scene.update();
 				}
 			}
 		}
-
-		dispatch.shared_event_dispatch().dispatch_deferred();
-		if (this.safe_updates) {
-			this.dispatch.safe_update();
-		} else {
-			this.dispatch.update();
-		}
-
-		const update_frames = this.fps.get_frames_due();
-		if (update_frames > 0 && this.current_scene != null) {
-			requires_render = true;
-			for (let f = 0; f < update_frames; f++) {
-				if (this.current_scene != null) {
-					if (this.safe_updates) {
-						this.current_scene.safe_update();
-					} else {
-						this.current_scene.update();
-					}
-				}
-			}
-		}
-
-		if (requires_render && this.screen != null) {
-			this.screen.render();
-		}
 	}
 
-	set_frame_rate (fps, animation_fps, min_frames, max_frames, reset) {
-		if (!animation_fps) {
-			animation_fps = fps;
-		}
-		this.fps = new fixed_rate_timer(fps, min_frames, max_frames, reset);
-		this.animation_fps = new fixed_rate_timer(animation_fps, min_frames, max_frames, reset);
+	if (requires_render && screen != null) {
+		screen.render();
 	}
-
-	pause () {
-		this.timer.stop();
-	}
-
-	resume () {
-		this.timer.start(() => {
-			this.update();
-		});
-	}
-
 }
 
-class timer {
-
-	constructor () {
-		this.active = false;
-	}
-
-	start (callback) {
-		this.callback = callback;
-		this.active = true;
-
-		window.requestAnimationFrame(() => {
-			this.next_frame();
-		});
-	}
-
-	next_frame () {
-		if (!this.active) {
-			return;
-		}
-
-		window.requestAnimationFrame(() => {
-			this.next_frame();
-		});
-		this.callback();
-	}
-
-
-	stop () {
-		this.active = false;
-		this.callback = null;
-	}
-
+function set_safe_updates (value) {
+	safe_updates = value;
 }
 
-class fixed_rate_timer {
-
-	constructor (fps, min_frames, max_frames, reset_frames) {
-		this.set_fps(fps, min_frames, max_frames, reset_frames);
+function set_frame_rate (fps, animation_fps, min_frames, max_frames, reset) {
+	if (!animation_fps) {
+		animation_fps = fps;
 	}
-
-	set_fps (fps, min_frames = 1, max_frames = 4, reset_frames = 16) {
-		this.fps = fps;
-		this.min_frames = min_frames;
-		this.max_frames = max_frames;
-		this.reset_frames = reset_frames;
-		this.reset();
-	}
-
-	reset () {
-		this.last_time = Date.now();
-		this.time_accumulated = 0;
-	}
-
-	get_frames_due () {
-		const now = Date.now();
-		const delta = (now - this.last_time) / 1000.0;
-		this.time_accumulated += delta;
-		this.last_time = now;
-
-		let frames_due = Math.floor(this.time_accumulated * this.fps);
-
-		if (this.reset_frames > 0 && frames_due > this.reset_frames) {
-			this.time_accumulated = 0;
-			frames_due = 1;
-		} else if (this.max_frames > 0 && frames_due > this.max_frames) {
-			this.time_accumulated = 0;
-			frames_due = this.max_frames;
-		} else if (this.min_frames > 0 && frames_due < this.min_frames) {
-			frames_due = 0;
-		} else {
-			this.time_accumulated -= frames_due / this.fps;
-		}
-
-		return frames_due;
-	}
-
+	fps.set_fps(fps, min_frames, max_frames, reset);
+	animation_fps.set_fps(animation_fps, min_frames, max_frames, reset);
 }
 
+function pause () {
+	render_callback.stop();
+}
 
+function resume () {
+	render_callback.start(() => {
+		update();
+	});
+}
+
+function set_scene (scene) {
+	if (current_scene != null) {
+		current_scene.dispose();
+		current_scene = null;
+	}
+
+	// can't clear event dispatch here in case of things hooked globally, might be a problem for button callbacks
+	dispatch.reset_shared_event_dispatch();
+
+	if (scene) {
+		current_scene = scene;
+		current_scene.app = {
+			fps: fps,
+			animation_fps: animation_fps,
+			set_frame_rate: set_frame_rate,
+			set_safe_updates: set_safe_updates,
+			set_scene: set_scene,
+			frame_dispatch: frame_dispatch,
+			pause: pause,
+			resume: resume,
+		};
+		current_scene.screen = screen;
+
+		current_scene.prepare();
+		if (screen != null) {
+			screen.root_view.add(scene.view);
+		}
+		current_scene.begin();
+	}
+
+	fps.reset();
+	animation_fps.reset();
+}
 
 function launch (canvas, scene, width, height, fit) {
-	const screen = (canvas != null) ? new ui.canvas_screen(canvas, width, height, fit) : null;
-
-	const _timer = new timer();
-	const _app = new app(screen, _timer);
-
-	window.app = _app;
-
-	_app.set_scene(scene);
-	_app.resume();
-	return _app;
+	screen = (canvas != null) ? new ui.canvas_screen(canvas, width, height, fit) : null;
+	set_scene(scene);
+	resume();
 }
 
-export { node, fixed_rate_timer, app, timer, launch };
+export { node, set_scene, pause, resume, set_frame_rate, launch };

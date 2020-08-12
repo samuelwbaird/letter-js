@@ -24,7 +24,7 @@ class loading_scene extends app.node {
 	update () {
 		super.update(this);
 		if (resource.require_assets('example_assets/', ['map_x1', 'test_x1'])) {
-			window.app.set_scene(new title_scene());
+			app.set_scene(new title_scene());
 		}
 	}
 }

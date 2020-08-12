@@ -417,4 +417,76 @@ class canvas_screen  {
 	}
 }
 
-export { touch_area, button, canvas_screen };
+class render_callback {
+	constructor () {
+		this.active = false;
+	}
+
+	start (callback) {
+		this.callback = callback;
+		this.active = true;
+		window.requestAnimationFrame(() => {
+			this.next_frame();
+		});
+	}
+
+	next_frame () {
+		if (!this.active) {
+			return;
+		}
+		window.requestAnimationFrame(() => {
+			this.next_frame();
+		});
+		this.callback();
+	}
+
+	stop () {
+		this.active = false;
+		this.callback = null;
+	}
+}
+
+class fixed_rate_timer {
+	constructor (fps, min_frames, max_frames, reset_frames) {
+		this.set_fps(fps, min_frames, max_frames, reset_frames);
+	}
+
+	set_fps (fps, min_frames = 1, max_frames = 4, reset_frames = 16) {
+		this.fps = fps;
+		this.delta = 1 / fps;
+		this.min_frames = min_frames;
+		this.max_frames = max_frames;
+		this.reset_frames = reset_frames;
+		this.reset();
+	}
+
+	reset () {
+		this.last_time = Date.now();
+		this.time_accumulated = 0;
+	}
+
+	get_frames_due () {
+		const now = Date.now();
+		const delta = (now - this.last_time) / 1000.0;
+		this.time_accumulated += delta;
+		this.last_time = now;
+
+		let frames_due = Math.floor(this.time_accumulated * this.fps);
+
+		if (this.reset_frames > 0 && frames_due > this.reset_frames) {
+			this.time_accumulated = 0;
+			frames_due = 1;
+		} else if (this.max_frames > 0 && frames_due > this.max_frames) {
+			this.time_accumulated = 0;
+			frames_due = this.max_frames;
+		} else if (this.min_frames > 0 && frames_due < this.min_frames) {
+			frames_due = 0;
+		} else {
+			this.time_accumulated -= frames_due / this.fps;
+		}
+
+		return frames_due;
+	}
+}
+
+export { touch_area, button, canvas_screen, render_callback, fixed_rate_timer };

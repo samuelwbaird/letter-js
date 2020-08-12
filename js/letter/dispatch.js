@@ -1,4 +1,4 @@
-// basic geometry types to be reused across all other letter modules
+// generic update list, delayed dispatch, and global named event handling
 // copyright 2020 Samuel Baird MIT Licence
 
 // -- update list --------------------------------------------------------------------
