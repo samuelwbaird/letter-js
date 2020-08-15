@@ -255,12 +255,12 @@ function set_safe_updates (value) {
 	safe_updates = value;
 }
 
-function set_frame_rate (fps, animation_fps, min_frames, max_frames, reset) {
-	if (!animation_fps) {
-		animation_fps = fps;
+function set_frame_rate (new_fps, new_animation_fps, min_frames, max_frames, reset) {
+	if (!new_animation_fps) {
+		new_animation_fps = new_fps;
 	}
-	fps.set_fps(fps, min_frames, max_frames, reset);
-	animation_fps.set_fps(animation_fps, min_frames, max_frames, reset);
+	fps.set_fps(new_fps, min_frames, max_frames, reset);
+	animation_fps.set_fps(new_animation_fps, min_frames, max_frames, reset);
 }
 
 function pause () {

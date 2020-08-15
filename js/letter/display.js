@@ -149,7 +149,7 @@ class display_list extends geometry.transform {
 			];
 			const ref = reference.world_transform();
 			for (let j = 0; j < 4; j++) {
-				rect = geometry.combined_rect_and_point(rect, geometry.untransform_point(ref, points[j]));
+				rect = geometry.combined_rect_and_point(rect, ref.untransform_point(ref, points[j]));
 			}
 			return rect;
 		}
