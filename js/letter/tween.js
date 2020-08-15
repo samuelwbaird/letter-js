@@ -156,7 +156,7 @@ class manager {
 		this.tweens.clear();
 		this.tweens = null;
 	}
-	
+
 }
 
 export { easing, tween, manager };

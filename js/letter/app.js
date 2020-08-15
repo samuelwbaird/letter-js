@@ -188,6 +188,17 @@ const frame_dispatch = new dispatch.frame_dispatch();
 let screen = null;
 let current_scene = null;
 
+const app_object = {
+	fps: fps,
+	animation_fps: animation_fps,
+	set_frame_rate: set_frame_rate,
+	set_safe_updates: set_safe_updates,
+	set_scene: set_scene,
+	frame_dispatch: frame_dispatch,
+	pause: pause,
+	resume: resume,
+};
+
 ui.button.configure((action) => {
 	frame_dispatch.delay(1, action);
 });
@@ -273,16 +284,7 @@ function set_scene (scene) {
 
 	if (scene) {
 		current_scene = scene;
-		current_scene.app = {
-			fps: fps,
-			animation_fps: animation_fps,
-			set_frame_rate: set_frame_rate,
-			set_safe_updates: set_safe_updates,
-			set_scene: set_scene,
-			frame_dispatch: frame_dispatch,
-			pause: pause,
-			resume: resume,
-		};
+		current_scene.app = app_object;
 		current_scene.screen = screen;
 
 		current_scene.prepare();
@@ -300,6 +302,7 @@ function launch (canvas, scene, width, height, fit) {
 	screen = (canvas != null) ? new ui.canvas_screen(canvas, width, height, fit) : null;
 	set_scene(scene);
 	resume();
+	return app_object;
 }
 
 export { node, set_scene, pause, resume, set_frame_rate, launch };
