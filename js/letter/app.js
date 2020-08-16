@@ -305,4 +305,4 @@ function launch (canvas, scene, width, height, fit) {
 	return app_object;
 }
 
-export { node, set_scene, pause, resume, set_frame_rate, launch };
+export { node, screen, launch, set_scene, pause, resume, set_frame_rate, frame_dispatch, set_safe_updates, fps, animation_fps };
