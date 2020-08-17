@@ -101,7 +101,7 @@ class node {
 	}
 
 	add_touch_area_rect (display_object, x, y, width, height, event_dispatch) {
-		const ta = ui.touch_area.rect(display_object, geometry.rect(x, y, width, height), event_dispatch);
+		const ta = ui.touch_area.rect(display_object, new geometry.rect(x, y, width, height), event_dispatch);
 		this.add_disposable(ta);
 		return ta;
 	}
