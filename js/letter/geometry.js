@@ -181,7 +181,7 @@ class color {
 		return 'rgb(' + Math.floor(this.r * 255) + ',' + Math.floor(this.g * 255) + ',' + Math.floor(this.b * 255) + ')';
 	}
 
-	grey (grey_level) {
+	static grey (grey_level) {
 		return new color(grey_level, grey_level, grey_level, 1);
 	}
 }
@@ -241,7 +241,7 @@ class font {
 				const can_break = (char === ' ' || char === '.' || char === '\t' || char === ',');
 				const width = this.measure_string(char);
 
-				if (current_line != '' && width + current_word_width + current_line_width > word_wrap) {
+				if (char == '\n' || (current_line != '' && width + current_word_width + current_line_width > word_wrap)) {
 					// move to the next line
 					lines.push(current_line.trim());
 					current_line = '';
