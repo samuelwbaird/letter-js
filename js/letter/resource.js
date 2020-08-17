@@ -219,43 +219,45 @@ function require_asset (base_url, name) {
 		if (entry.description.clips && Array.isArray(entry.description.clips)) {
 			for (const clip of entry.description.clips) {
 				const clip_data = new geometry.clip_data(clip.name);
-				for (const frame of clip.frames) {
-					// special case where each frame is only a single image
-					if (typeof frame == 'string') {
-						const frame_data = clip_data.add_frame(null);
-						frame_data.add_image_content(
-							null,
-							all_image_data.get(frame),
-							0, 0, 1, 1, 0, 1
-						);
+				if (clip.frames && Array.isArray(clip.frames)) {
+					for (const frame of clip.frames) {
+						// special case where each frame is only a single image
+						if (typeof frame == 'string') {
+							const frame_data = clip_data.add_frame(null);
+							frame_data.add_image_content(
+								null,
+								all_image_data.get(frame),
+								0, 0, 1, 1, 0, 1
+							);
 
-					} else {
-						const frame_data = clip_data.add_frame(frame.label);
-						if (frame.content) {
-							for (const entry of frame.content) {
-								if (entry.image) {
-									frame_data.add_image_content(
-										entry.name,
-										entry.image, // all_image_data.get(entry.image),
-										entry.transform[0],
-										entry.transform[1],
-										entry.transform[2],
-										entry.transform[3],
-										entry.transform[4],
-										entry.transform[5]
-									);
-								} else if (entry.clip) {
-									frame_data.add_clip_content(
-										entry.name,
-										entry.clip, //all_clip_data(entry.clip),
-										entry.transform[0],
-										entry.transform[1],
-										entry.transform[2],
-										entry.transform[3],
-										entry.transform[4],
-										entry.transform[5],
-										entry.transform[6]
-									);
+						} else {
+							const frame_data = clip_data.add_frame(frame.label);
+							if (frame.content) {
+								for (const entry of frame.content) {
+									if (entry.image) {
+										frame_data.add_image_content(
+											entry.name,
+											entry.image, // all_image_data.get(entry.image),
+											entry.transform[0],
+											entry.transform[1],
+											entry.transform[2],
+											entry.transform[3],
+											entry.transform[4],
+											entry.transform[5]
+										);
+									} else if (entry.clip) {
+										frame_data.add_clip_content(
+											entry.name,
+											entry.clip, //all_clip_data(entry.clip),
+											entry.transform[0],
+											entry.transform[1],
+											entry.transform[2],
+											entry.transform[3],
+											entry.transform[4],
+											entry.transform[5],
+											entry.transform[6]
+										);
+									}
 								}
 							}
 						}
