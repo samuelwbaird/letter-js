@@ -6,8 +6,13 @@ import * as dispatch from './dispatch.js';
 const yield_cancel = {};
 
 class coroutine {
-	constructor (generator) {
-		this.generator = generator();
+	constructor (generator, apply_this) {
+		if (apply_this) {
+			this.generator = generator.apply(apply_this)
+		} else {
+			this.generator = generator();
+		}
+		
 		this.yield = null;
 		this.complete = false;
 	}
@@ -37,16 +42,13 @@ class coroutine {
 }
 
 class coroutine_manager {
-	constructor () {
+	constructor (apply_this) {
+		this.apply_this = apply_this;
 		this.update_list = new dispatch.update_list();
 	}
 
-	run (generator) {
-		this.update_list.add(new coroutine(generator));	// prime the generator / instantiate the coroutine
-	}
-
-	add (generator) {
-		this.update_list.add(new coroutine(generator));	// prime the generator / instantiate the coroutine
+	run (generator, apply_this) {
+		this.update_list.add(new coroutine(generator, (apply_this != null) ? apply_this : this.apply_this));
 	}
 
 	update () {
@@ -102,8 +104,8 @@ function yield_condition (condition) {
 	return condition;
 }
 
-function yield_coroutine (generator) {
-	let co = coroutine(generator);
+function yield_coroutine (generator, apply_this) {
+	let co = coroutine(generator, apply_this);
 	return function () {
 		return co.update();
 	}

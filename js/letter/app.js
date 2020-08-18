@@ -87,7 +87,7 @@ class node {
 
 	get_coroutine_manager() {
 		if (!this.coroutine_manager) {
-			this.coroutine_manager = new coroutine.coroutine_manager();
+			this.coroutine_manager = new coroutine.coroutine_manager(this);
 		}
 		return this.coroutine_manager;
 	}
