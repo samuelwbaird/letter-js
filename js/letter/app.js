@@ -4,6 +4,7 @@
 
 import * as geometry from './geometry.js';
 import * as dispatch from './dispatch.js';
+import * as coroutine from './coroutine.js';
 import * as display from './display.js';
 import * as ui from './ui.js';
 import * as tween from './tween.js';
@@ -84,6 +85,13 @@ class node {
 		return this.frame_dispatch;
 	}
 
+	get_coroutine_manager() {
+		if (!this.coroutine_manager) {
+			this.coroutine_manager = new coroutine.coroutine_manager();
+		}
+		return this.coroutine_manager;
+	}
+
 	delay (count, fn, tag) {
 		this.get_frame_dispatch().delay(count, fn, tag);
 	}
@@ -115,6 +123,9 @@ class node {
 		if (this.tween_manager) {
 			this.tween_manager.update();
 		}
+		if (this.coroutine_manager) {
+			this.coroutine_manager.update();
+		}
 		if (this.frame_dispatch) {
 			this.frame_dispatch.update();
 		}
@@ -128,6 +139,9 @@ class node {
 	safe_update () {
 		if (this.tween_manager) {
 			this.tween_manager.safe_update();
+		}
+		if (this.coroutine_manager) {
+			this.coroutine_manager.safe_update();
 		}
 		if (this.frame_dispatch) {
 			this.frame_dispatch.safe_update();
@@ -154,6 +168,11 @@ class node {
 		if (this.tween_manager) {
 			this.tween_manager.dispose();
 			this.tween_manager = null;
+		}
+		
+		if (this.coroutine_manager) {
+			this.coroutine_manager.dispose();
+			this.coroutine_manager = null;
 		}
 
 		if (this.frame_dispatch) {
