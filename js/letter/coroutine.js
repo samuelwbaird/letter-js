@@ -8,11 +8,11 @@ const yield_cancel = {};
 class coroutine {
 	constructor (generator, apply_this) {
 		if (apply_this) {
-			this.generator = generator.apply(apply_this)
+			this.generator = generator.apply(apply_this);
 		} else {
 			this.generator = generator();
 		}
-		
+
 		this.yield = null;
 		this.complete = false;
 	}
@@ -21,7 +21,7 @@ class coroutine {
 		if (this.complete) {
 			return true;
 		}
-		
+
 		// do we have a current yield condition
 		if (this.yield) {
 			const satisfied = this.yield();
@@ -105,10 +105,10 @@ function yield_condition (condition) {
 }
 
 function yield_coroutine (generator, apply_this) {
-	let co = coroutine(generator, apply_this);
+	const co = coroutine(generator, apply_this);
 	return function () {
 		return co.update();
-	}
+	};
 }
 
 export { coroutine_manager, coroutine, yield_cancel, yield_frame, yield_frames, yield_tween, yield_condition, yield_coroutine };

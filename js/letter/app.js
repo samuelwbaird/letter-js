@@ -85,7 +85,7 @@ class node {
 		return this.frame_dispatch;
 	}
 
-	get_coroutine_manager() {
+	get_coroutine_manager () {
 		if (!this.coroutine_manager) {
 			this.coroutine_manager = new coroutine.coroutine_manager(this);
 		}
@@ -169,7 +169,7 @@ class node {
 			this.tween_manager.dispose();
 			this.tween_manager = null;
 		}
-		
+
 		if (this.coroutine_manager) {
 			this.coroutine_manager.dispose();
 			this.coroutine_manager = null;
