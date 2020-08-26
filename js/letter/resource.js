@@ -69,13 +69,13 @@ function get_combined_clip_data (from_clips) {
 	for (const clip_name of from_clips) {
 		const other_data = all_clip_data.get(clip_name);
 		//  create a label for the whole clip being combined
-		combined_clip_data.labels[clip_name] = { start_frame: combined_clip_data.frames.length + 1, end_frame: combined_clip_data.frames.length + other_data.frames.length };
+		combined_clip_data.labels.set(clip_name, { start_frame: combined_clip_data.frames.length + 1, end_frame: combined_clip_data.frames.length + other_data.frames.length });
 		// merge in labels for this other clip
 		for (const [name, frames] of other_data.labels) {
-			combined_clip_data.labels[name] = {
+			combined_clip_data.labels.set(name, {
 				start_frame: frames.start_frame + combined_clip_data.frames.length,
 				end_frame: frames.end_frame + combined_clip_data.frames.length,
-			};
+			});
 		}
 		for (const frame of other_data.frames) {
 			combined_clip_data.frames.push(frame);

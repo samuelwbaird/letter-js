@@ -363,7 +363,7 @@ class clip extends display_list {
 					}
 					const frames = this.clip_data.labels.get(arg);
 					if (!frames) {
-						throw 'unknown frame ' + arg + ' in clip ' + this.clip_data.name;
+						throw 'unknown label ' + arg + ' in clip ' + this.clip_data.name;
 					}
 					this.start_frame = frames.start_frame;
 					this.end_frame = frames.end_frame;
