@@ -317,11 +317,13 @@ function set_scene (scene) {
 	animation_fps.reset();
 }
 
-function launch (canvas, scene, width, height, fit) {
+function init (canvas, width, height, fit) {
 	screen = (canvas != null) ? new ui.canvas_screen(canvas, width, height, fit) : null;
-	set_scene(scene);
+	// begins with an empty node as a scene to make sure all aspects of the app are up and running before 
+	// the first custom scene is loaded
+	set_scene(new node());
 	resume();
 	return app_object;
 }
 
-export { node, screen, launch, set_scene, pause, resume, set_frame_rate, frame_dispatch, set_safe_updates, fps, animation_fps };
+export { node, screen, init, set_scene, pause, resume, set_frame_rate, frame_dispatch, set_safe_updates, fps, animation_fps };
