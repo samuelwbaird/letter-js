@@ -142,12 +142,6 @@ class manager {
 		});
 	}
 
-	safe_update () {
-		this.tweens.safe_update((tween) => {
-			tween.update();
-		});
-	}
-
 	clear () {
 		this.tweens.clear();
 	}

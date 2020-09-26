@@ -7,9 +7,20 @@
 class update_list {
 	constructor () {
 		this.list = [];
+
+		// control updates during iteration
+		this.is_iterating = false;
+		this.iteration_index = 0;
+
+		// these are only create if an interruption to fast path occurs
+		this.slow_path_to_complete = null;
+		this.slow_path_to_ignore = null;
 	}
 
 	add (obj, tag) {
+		// capture the slow path here before objects are added this update cycle
+		this.enable_slow_path_iteration_if_required();
+
 		this.list.push({
 			obj: obj,
 			tag: tag,
@@ -17,9 +28,8 @@ class update_list {
 	}
 
 	remove (obj_or_tag) {
-		if (this.is_iterating) {
-			throw 'remove during update/iteration';
-		}
+		// cancel the fast path if we're in an iteration
+		this.enable_slow_path_iteration_if_required();
 
 		let did_remove = false;
 		let i = 0;
@@ -37,9 +47,10 @@ class update_list {
 	}
 
 	clear () {
-		if (this.is_iterating) {
-			throw 'clear during update/iteration';
-		}
+		// cancel the fast path if we're in an iteration
+		this.enable_slow_path_iteration_if_required();
+
+		// clear our actual list
 		this.list = [];
 	}
 
@@ -48,25 +59,77 @@ class update_list {
 	}
 
 	update (update_function, remove_on_return_true) {
+		// if we're already in an iteration, don't allow it to recurse
 		if (this.is_iterating) {
-			throw 'update during update/iteration';
+			return;
 		}
+
+		// markers to begin the iteration in fast path
 		this.is_iterating = true;
+
+		// begin on a fast path, iterating by index and removing complete updates as required
+		// avoid creation of temporary objects unless update during iteration requires it
 		let i = 0;
 		let length = this.list.length;
-		while (i < length) {
+		while (i < length && this.slow_path_to_complete == null) {
+			// save this marker in case we drop off the fast path
+			this.iteration_index = i;
+
+			// check this entry, update and remove if required
 			const entry = this.list[i];
 			if (update_function(entry.obj) === true && remove_on_return_true) {
-				this.list.splice(i, 1);
-				length--;
+				// if we've jumped onto the slow path during the update then be careful here
+				if (this.slow_path_to_complete != null) {
+					const post_update_index = this.list.indexOf(entry);
+					if (post_update_index >= 0) {
+						this.list.splice(post_update_index, 1);
+					}
+				} else {
+					this.list.splice(i, 1);
+					length--;
+				}
 			} else {
 				i++;
 			}
 		}
+
+		// if we've dropped off the fast path then complete the iteration on the slow path
+		if (this.slow_path_to_complete != null) {
+			// complete all that haven't been removed since we started the slow path
+			for (const entry of this.slow_path_to_complete) {
+				// first check this entry is still in the real list
+				const current_index = this.list.indexOf(entry);
+				if (current_index >= 0) {
+					if (update_function(entry.obj) === true && remove_on_return_true) {
+						// find and remove it from the original list, if its still in after the update function
+						const post_update_index = this.list.indexOf(entry);
+						if (post_update_index >= 0) {
+							this.list.splice(post_update_index, 1);
+						}
+					}
+				}
+			}
+		}
+
+		// clear flags and data that can be accumulated during iteration
+		this.slow_path_to_complete = null;
 		this.is_iterating = false;
 	}
 
-	safe_update (update_function, remove_on_return_true) {
+	enable_slow_path_iteration_if_required () {
+		// only do this if we haven't already for this iteration
+		if (!this.is_iterating || this.slow_path_to_complete != null) {
+			return;
+		}
+
+		// capture a copy of everything we need to complete on the remainder of the fast path
+		this.slow_path_to_complete = [];
+		for (let i = this.iteration_index + 1; i < this.list.length; i++) {
+			this.slow_path_to_complete.push(this.list[i]);
+		}
+	}
+
+	clone_update (update_function, remove_on_return_true) {
 		const clone = this.list.concat();
 		for (const entry of clone) {
 			if (update_function(entry.obj) === true && remove_on_return_true) {
@@ -135,10 +198,6 @@ class frame_dispatch {
 
 	update () {
 		this.update_list.update(frame_dispatch_update_function, true);
-	}
-
-	safe_update () {
-		this.update_list.safe_update(frame_dispatch_update_function, true);
 	}
 
 	// proxy through some methods from the update_list
@@ -303,13 +362,7 @@ class context {
 	}
 
 	update () {
-		const safe_updates = this.get(flag_safe_updates);
-		if (safe_updates) {
-			this.frame_dispatch.safe_update();
-		} else {
-			this.frame_dispatch.update();
-		}
-
+		this.frame_dispatch.update();
 		this.event_dispatch.dispatch_deferred();
 	}
 
@@ -388,8 +441,6 @@ class context {
 		}
 	}
 }
-
-export const flag_safe_updates = 'flag_safe_updates';
 
 export const event_activate_context = 'event_activate_context';
 export const event_deactivate_context = 'event_deactivate_context';

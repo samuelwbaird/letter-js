@@ -52,13 +52,8 @@ class coroutine_manager {
 	}
 
 	update () {
-		this.update_list.safe_update((c) => {
-			return c.update();
-		}, true);
-	}
-
-	safe_update () {
-		this.update_list.safe_update((c) => {
+		// this.update_list.clone_update((c) => {
+		this.update_list.update((c) => {
 			return c.update();
 		}, true);
 	}

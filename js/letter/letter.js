@@ -22,7 +22,6 @@ class app_node {
 
 		this.tween_manager = null;
 		this.frame_dispatch = null;
-		this.use_safe_updates = false;
 
 		this.children = null;
 		this.disposables = null;
@@ -122,11 +121,6 @@ class app_node {
 	}
 
 	update () {
-		if (this.use_safe_updates) {
-			this.safe_update();
-			return;
-		}
-
 		if (this.tween_manager) {
 			this.tween_manager.update();
 		}
@@ -139,23 +133,6 @@ class app_node {
 		if (this.children) {
 			this.children.update((child) => {
 				child.update();
-			});
-		}
-	}
-
-	safe_update () {
-		if (this.tween_manager) {
-			this.tween_manager.safe_update();
-		}
-		if (this.coroutine_manager) {
-			this.coroutine_manager.safe_update();
-		}
-		if (this.frame_dispatch) {
-			this.frame_dispatch.safe_update();
-		}
-		if (this.children) {
-			this.children.safe_update((child) => {
-				child.safe_update();
 			});
 		}
 	}
@@ -213,12 +190,10 @@ class app {
 		this.animation_fps = new ui.fixed_rate_timer(60);
 		this.frame_dispatch = new dispatch.frame_dispatch();
 
-		this.safe_updates = false;
 		this.screen = screen;
 		this.current_scene = null;
 
 		this.context = new dispatch.context();
-		this.context.set(dispatch.flag_safe_updates, false);
 
 		if (this.screen) {
 			this.screen.set_context(this.context);
@@ -226,8 +201,6 @@ class app {
 	}
 
 	update () {
-		const safe_updates = this.context.get(dispatch.flag_safe_updates);
-
 		// keep up to date with window size
 		if (this.screen != null) {
 			this.screen.update();
@@ -251,11 +224,7 @@ class app {
 		}
 
 		// top level frame dispatch outside of all scenes and context
-		if (safe_updates) {
-			this.frame_dispatch.safe_update();
-		} else {
-			this.frame_dispatch.update();
-		}
+		this.frame_dispatch.update();
 
 		// top level ui context dispatch include deferred events
 		this.context.get_active().update();
@@ -266,11 +235,7 @@ class app {
 			requires_render = true;
 			for (let f = 0; f < update_frames; f++) {
 				if (this.current_scene != null) {
-					if (safe_updates) {
-						this.current_scene.safe_update();
-					} else {
-						this.current_scene.update();
-					}
+					this.current_scene.update();
 				}
 			}
 		}
