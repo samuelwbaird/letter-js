@@ -59,9 +59,9 @@
 		}, false);		
 
 		// launch app with nominal sizing
-		import * as app from './js/letter/app.js';
-		app.init(canvas, 320, 480, 'fit');
-		
+		import * as letter from './js/letter/letter.js';
+		const app = letter.launch_app(canvas, 320, 460, 'fit');
+
 		// launch the first scene for this game
 		import loading_scene from './js/example/loading_scene.js';
 		app.set_scene(new loading_scene());

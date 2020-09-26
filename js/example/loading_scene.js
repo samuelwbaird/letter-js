@@ -2,10 +2,10 @@
 // polls loading of assets before displaying a title scene
 // copyright 2020 Samuel Baird MIT Licence
 
-import { geometry, tween, resource, app } from '../letter/letter.js';
+import { geometry, tween, resource, app_node } from '../letter/letter.js';
 import title_scene from './title_scene.js';
 
-class loading_scene extends app.node {
+class loading_scene extends app_node {
 
 	constructor () {
 		super();
@@ -24,7 +24,7 @@ class loading_scene extends app.node {
 	update () {
 		super.update(this);
 		if (resource.require_assets('example_assets/', ['map_x1', 'test_x1'])) {
-			app.set_scene(new title_scene());
+			this.app.set_scene(new title_scene());
 		}
 	}
 }

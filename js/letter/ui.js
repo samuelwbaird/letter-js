@@ -5,12 +5,19 @@ import * as geometry from  './geometry.js';
 import * as dispatch from './dispatch.js';
 import * as display from  './display.js';
 
+export const config_button_touch_outer_padding = 'config_button_touch_outer_padding';
+export const event_button_down = 'event_button_down';
+export const event_button_up = 'event_button_up';
+
+const dispatch_delayed_button = 'dispatch_delayed_button';
+
 class touch_area {
 
-	constructor (point_conversion, area_test, selected_event_dispatch) {
+	constructor (point_conversion, area_test, context) {
 		this.point_conversion = point_conversion;
 		this.area_test = area_test;
-		this.event_handler = new dispatch.event_handler(selected_event_dispatch);
+		this.context = context;
+		this.event_handler = new dispatch.event_handler(context.event_dispatch);
 		this.enabled = true;
 
 		// initialise values
@@ -54,6 +61,9 @@ class touch_area {
 			});
 			this.event_handler.listen('touch_end', (touch_data) => {
 				this.handle_touch_cancel(touch_data);
+			});
+			this.event_handler.listen(dispatch.event_deactivate_context, () => {
+				this.cancel_touch();
 			});
 		} else if (!value && this.event_handler.did_listen) {
 			this.event_handler.unlisten();
@@ -147,7 +157,7 @@ class touch_area {
 
 
 	// add static constructors
-	static bounds (display_object, padding, selected_event_dispatch) {
+	static bounds (display_object, padding, context) {
 		if (padding == undefined) {
 			padding = 0;
 		}
@@ -162,11 +172,11 @@ class touch_area {
 				rect = geometry.expanded_rect(rect, padding, padding);
 				return rect.contains_point(point);
 			}),
-			selected_event_dispatch
+			context
 		);
 	}
 
-	static rect (display_object, rect, selected_event_dispatch) {
+	static rect (display_object, rect, context) {
 		return new touch_area(
 			// point conversion
 			((point) => {
@@ -176,7 +186,7 @@ class touch_area {
 			((point) => {
 				return rect.contains_point(point);
 			}),
-			selected_event_dispatch
+			context
 		);
 	}
 }
@@ -185,26 +195,14 @@ class touch_area {
 // adds two frame button behaviour to an animated display object
 // copyright 2020 Samuel Baird MIT Licence
 
-// -- configure these with later static method ---------
-
-// static method used to dispatch button actions
-// replace with a method that delays by 1 frame to allow visual button update
-let button_action_callback = (action) => {
-	action();
-};
-// override these functions to provide universal button click sounds if required
-let button_on_button_down = function () {};
-let button_on_button_up = function () {};
-// how much extra logical space to allow on the outer touch area
-let button_touch_out_padding = 20;
-
 class button {
 
-	constructor (clip, action, event_dispatch, init_values) {
+	constructor (clip, action, init_values, context) {
 		// base properties for a button
 		this.clip = clip;
 		this.action = action;
-		this.event_dispatch = event_dispatch;
+		this.context = context;
+		this.event_handler = new dispatch.event_handler(context.event_dispatch);
 
 		// override these properties if required
 		if (clip.goto != null) {
@@ -223,8 +221,10 @@ class button {
 		this.is_down = false;
 		this.is_releasing = false;
 
-		this.touch_area_inner = touch_area.bounds(clip, 0, event_dispatch);
-		this.touch_area_outer = touch_area.bounds(clip, button_touch_out_padding, event_dispatch);
+		const button_touch_out_padding = context.get('config_button_touch_outer_padding', 20);
+
+		this.touch_area_inner = touch_area.bounds(clip, 0, context);
+		this.touch_area_outer = touch_area.bounds(clip, button_touch_out_padding, context);
 
 		this.touch_area_inner.on_touch_begin = () => {
 			this.update();
@@ -244,6 +244,10 @@ class button {
 		this.touch_area_outer.on_touch_end = () => {
 			this.handle_button_release();
 		};
+		this.event_handler.listen(dispatch.event_deactivate_context, () => {
+			this.context.frame_dispatch.remove(dispatch_delayed_button);
+		});
+
 	}
 
 	get enabled () {
@@ -266,25 +270,28 @@ class button {
 		if (this.enabled && this.is_visible() && this.touch_area_inner.is_touched && this.touch_area_outer.is_touch_over && !this.is_releasing) {
 			if (!this.is_down) {
 				this.is_down = true;
-				button_on_button_down(this);
 				if (typeof this.down_frame == 'function') {
 					this.down_frame(this);
 				} else if (this.clip.goto != null) {
 					this.clip.goto(this.down_frame);
 				}
+
+				// dispatch an event for global button down
+				this.context.event_dispatch.defer(event_button_down, { button: this });
 			}
 		} else {
 			if (this.is_down) {
 				this.is_down = false;
-				button_on_button_up(this);
 				if (typeof this.up_frame == 'function') {
 					this.up_frame(this);
 				} else if (this.clip.goto != null) {
 					this.clip.goto(this.up_frame);
 				}
+
+				// dispatch an event for global button up
+				this.context.event_dispatch.defer(event_button_up, { button: this });
 			}
 		}
-
 	}
 
 	handle_button_release () {
@@ -296,10 +303,10 @@ class button {
 			this.is_releasing = true;
 			this.update();
 
-			button_action_callback(() => {
+			this.context.frame_dispatch.delay(1, () => {
 				this.action(this);
 				this.is_releasing = false;
-			});
+			}, dispatch_delayed_button);
 		}
 	}
 
@@ -328,13 +335,6 @@ class button {
 		}
 		this.clip = null;
 		this.action = null;
-	}
-
-	static configure (delayed_action, on_button_up, on_button_down, padding) {
-		button_action_callback = delayed_action;
-		button_on_button_down = (on_button_down != undefined ? on_button_down : button_on_button_down);
-		button_on_button_up = (on_button_up != undefined ? on_button_up : button_on_button_up);
-		button_touch_out_padding = (padding != undefined ? padding : button_touch_out_padding);
 	}
 }
 
@@ -373,8 +373,22 @@ class canvas_screen  {
 		}, false);
 	}
 
+	set_context (context) {
+		this.context = context;
+		this.context.set('screen', this);
+		this.context.set('canvas', this.canvas);
+		this.context.set('ctx', this.ctx);
+	}
+
 	touch_event (event_name, evt) {
 		evt.preventDefault();
+
+		if (this.context == null) {
+			return;
+		}
+
+		// where will events be dispatched, can be overridden by the context
+		const event_dispatch = this.context.get_active().event_dispatch;
 
 		// correct co-ords for hdpi displays
 		const scale_x = this.canvas.width / this.canvas.clientWidth;
@@ -382,10 +396,10 @@ class canvas_screen  {
 
 		if (evt.changedTouches) {
 			for (const touch of evt.changedTouches) {
-				dispatch.shared_event_dispatch().defer(event_name, { id : touch.identifier, time : Date.now, x : (touch.pageX - this.canvas.offsetLeft) * scale_x, y : (touch.pageY - this.canvas.offsetTop) * scale_y });
+				event_dispatch.defer(event_name, { id : touch.identifier, time : Date.now, x : (touch.pageX - this.canvas.offsetLeft) * scale_x, y : (touch.pageY - this.canvas.offsetTop) * scale_y });
 			}
 		} else {
-			dispatch.shared_event_dispatch().defer(event_name, { id : 1, time : Date.now, x : (evt.pageX - this.canvas.offsetLeft) * scale_x, y : (evt.pageY - this.canvas.offsetTop) * scale_y });
+			event_dispatch.defer(event_name, { id : 1, time : Date.now, x : (evt.pageX - this.canvas.offsetLeft) * scale_x, y : (evt.pageY - this.canvas.offsetTop) * scale_y });
 		}
 	}
 

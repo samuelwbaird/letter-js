@@ -236,14 +236,22 @@ class event_dispatch {
 			this.dispatch(def.event_name, def.data);
 		}
 	}
-}
 
-let shared = [new event_dispatch()];
+	clear_deferred () {
+		this.deferred = [];
+	}
+
+	dispose () {
+		this.clear_deferred();
+		this.remove_all();
+	}
+
+}
 
 class event_handler {
 
 	constructor (dispatch) {
-		this.event_dispatch = (dispatch != null ? dispatch : shared[shared.length - 1]);
+		this.event_dispatch = dispatch;
 		this.did_listen = false;
 	}
 
@@ -274,20 +282,116 @@ class event_handler {
 	}
 }
 
-function shared_event_dispatch () {
-	return shared[shared.length - 1];
+// a dispatch.context is a sort of execution context for objects within an app
+// tying ui and delay action elements to a particular spot within the app_node tree
+// often the root app
+
+class context {
+
+	constructor (parent) {
+		this.parent = parent;
+		this.current = this;
+		this.root = (parent != null) ? parent.root : this;
+
+		// which derivatives of this context are more current than this one
+		this.current_stack = [];
+
+		// the dispatch and flags that are set at this level
+		this.frame_dispatch = new frame_dispatch();
+		this.event_dispatch = new event_dispatch();
+		this.flags = new Map();
+	}
+
+	update () {
+		const safe_updates = this.get(flag_safe_updates);
+		if (safe_updates) {
+			this.frame_dispatch.safe_update();
+		} else {
+			this.frame_dispatch.update();
+		}
+
+		this.event_dispatch.dispatch_deferred();
+	}
+
+	reset () {
+		this.frame_dispatch.clear();
+		this.event_dispatch.clear_deferred();
+
+	}
+
+	set (name, value) {
+		this.flags.set(name, value);
+	}
+
+	get (name, default_value = null) {
+		if (this.flags[name]) {
+			return this.flags[name];
+		}
+		if (this.parent) {
+			return this.parent.get(name);
+		}
+		return default_value;
+	}
+
+	/*
+	derive (active) {
+		const derived = new context(this);
+		if (active) {
+
+		}
+		return derived;
+	}
+	*/
+
+	/* TODO: work out what to do with this
+	activate () {
+		if (this.active) {
+			// TODO: move to the front of the queue in the parent
+			return;
+		}
+
+		// add to the parent derived
+		this.active = true;
+
+		// override on the parent
+		// 			this.event_dispatch.clear_deferred();
+	}
+
+	deactivate () {
+		// TODO deactivate context event
+		// disable (and send a cancel all message to all listeners)
+
+		this.active = false;
+
+	}
+	*/
+
+	get_active () {
+		// if no derived have taken over then this context is current
+		if (this.current_stack.length == 0) {
+			return this;
+		}
+
+		// otherwise defer to the most recent derived
+		return this.current_stack[this.current_stack.length - 1].get_active();
+	}
+
+	dispose () {
+		this.deactivate();
+		if (this.frame_dispatch) {
+			this.frame_dispatch.dispose();
+			this.frame_dispatch = null;
+		}
+		if (this.event_dispatch) {
+			this.event_dispatch.dispose();
+			this.event_dispatch = null;
+		}
+	}
 }
 
-function reset_shared_event_dispatch () {
-	shared = [new event_dispatch()];
-}
+export const flag_safe_updates = 'flag_safe_updates';
 
-function push_shared_event_dispatch () {
-	shared.push(new event_dispatch());
-}
+export const event_activate_context = 'event_activate_context';
+export const event_deactivate_context = 'event_deactivate_context';
 
-function pop_shared_event_dispatch () {
-	return shared.pop();
-}
-
-export { update_list, frame_dispatch, event_dispatch, event_handler, shared_event_dispatch, reset_shared_event_dispatch, push_shared_event_dispatch, pop_shared_event_dispatch };
+export { update_list, frame_dispatch, event_dispatch, event_handler, context };
