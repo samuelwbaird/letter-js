@@ -338,8 +338,13 @@ class image_data {
 		this.dest_rect = new rect(xy[0], xy[1], xy[2] - xy[0], xy[3] - xy[1]);
 	}
 
-	bounds  () {
+	bounds () {
 		return this.dest_rect;
+	}
+	
+	expand_for_tiling (amount = 0.1) {
+		this.source_rect.expand(-amount, -amount);
+		this.dest_rect.expand(amount, amount);
 	}
 }
 
