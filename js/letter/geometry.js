@@ -114,6 +114,10 @@ class transform {
 	}
 
 	multiply (t) {
+		const flip_x = Math.sign(this.scale_x) != Math.sign(t.scale_x);
+		const flip_y = Math.sign(this.scale_y) != Math.sign(t.scale_y);
+		const flip_rotation = 1 * (flip_x ? -1 : 1) * (flip_y ? -1 : 1);
+		
 		// special case for rotation
 		if (this.rotation == 0) {
 			return new transform(
@@ -121,18 +125,19 @@ class transform {
 				this.y + (this.scale_y * t.y),
 				this.scale_x * t.scale_x,
 				this.scale_y * t.scale_y,
-				this.rotation + t.rotation,
+				this.rotation + (t.rotation * flip_rotation),
 				this.alpha * t.alpha
 			);
 		} else {
 			const c = Math.cos(this.rotation);
 			const s = Math.sin(this.rotation);
+			
 			return new transform(
 				this.x + (this.scale_x * t.x * c) - (this.scale_y * t.y * s),
 				this.y + (this.scale_y * t.y * c) + (this.scale_x * t.x * s),
 				this.scale_x * t.scale_x,
 				this.scale_y * t.scale_y,
-				this.rotation + t.rotation,
+				this.rotation + (t.rotation * flip_rotation),
 				this.alpha * t.alpha
 			);
 		}
