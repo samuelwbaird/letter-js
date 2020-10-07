@@ -117,7 +117,7 @@ class transform {
 		const flip_x = Math.sign(this.scale_x) != Math.sign(t.scale_x);
 		const flip_y = Math.sign(this.scale_y) != Math.sign(t.scale_y);
 		const flip_rotation = 1 * (flip_x ? -1 : 1) * (flip_y ? -1 : 1);
-		
+
 		// special case for rotation
 		if (this.rotation == 0) {
 			return new transform(
@@ -131,7 +131,7 @@ class transform {
 		} else {
 			const c = Math.cos(this.rotation);
 			const s = Math.sin(this.rotation);
-			
+
 			return new transform(
 				this.x + (this.scale_x * t.x * c) - (this.scale_y * t.y * s),
 				this.y + (this.scale_y * t.y * c) + (this.scale_x * t.x * s),
@@ -200,13 +200,29 @@ color.clear = new color(0, 0, 0, 0);
 // also provides measurement and line breaking
 
 class font {
-	constructor (ctx, size, name, align, baseline) {
+	constructor (ctx, size, name, align = null, init_values = null) {
 		this.ctx = ctx;
 		this.size = (size != undefined ? size : 11);
 		this.name = (name != undefined ? name : 'sans-serif');
+
+		// init values could be in 4th or 5th place
+		if (init_values == null && (typeof align != 'string')) {
+			init_values = align;
+			align = null;
+		}
+
+		// default values
 		this.align = (align != undefined ? align : 'start');
-		this.baseline = (baseline != undefined ? baseline : 'middle');
+		this.baseline = 'middle';
 		this.font = this.size + 'px ' + this.name;
+		this.bold = false;
+
+		// override with init values
+		if (init_values) {
+			for (const k in init_values) {
+				this[k] = init_values[k];
+			}
+		}
 
 		// measure the line height as soon as we can
 		this.set();
@@ -222,7 +238,7 @@ class font {
 		if (ctx == undefined) {
 			ctx = this.ctx;
 		}
-		ctx.font = this.font;
+		ctx.font = (this.bold ? 'bold ' : ' ') + this.font;
 		ctx.textAlign = this.align;
 		ctx.textBaseline = this.baseline;
 	}
@@ -346,7 +362,7 @@ class image_data {
 	bounds () {
 		return this.dest_rect;
 	}
-	
+
 	expand_for_tiling (amount = 0.1) {
 		this.source_rect.expand(-amount, -amount);
 		this.dest_rect.expand(amount, amount);
