@@ -10,6 +10,7 @@ class display_list extends geometry.transform {
 		// this.name = null;
 		// this.parent = null;
 		// this.children = null;
+		// this.visibility_test = null;
 
 		this.visible = true;
 
@@ -35,6 +36,7 @@ class display_list extends geometry.transform {
 		}
 		this.get_children().push(display);
 		display.parent = this;
+		return display;
 	}
 
 	add_at_index (display, index) {
@@ -250,6 +252,8 @@ class display_list extends geometry.transform {
 			return;
 		}
 
+		// TODO: if this.visibility_test, then check this test against screen bounds before continuing
+
 		if (this.is_frozen) {
 			ctx.save();
 			ctx.translate(transform.x, transform.y);
@@ -271,6 +275,9 @@ class display_list extends geometry.transform {
 			}
 		}
 	}
+
+	// TODO: set_visibilty_test_from_current_bounds()
+	// create a visibilty test function based on the current content bounds of this display list, + optional padding
 
 	// -- override / customise for different display object types ------------
 
