@@ -30,6 +30,17 @@ class display_list extends geometry.transform {
 		return this.children;
 	}
 
+	get_child (name) {
+		if (this.children) {
+			for (const child of this.children) {
+				if (child.name == name) {
+					return child;
+				}
+			}
+		}
+		return null;
+	}
+
 	add (display) {
 		if (display.parent) {
 			display.remove_from_parent();
@@ -469,6 +480,21 @@ class clip extends display_list {
 		// -- recreate the child display list, re-using objects
 		for (const [index, content] of frame.content.entries()) {
 			let child = current.get(content.instance_name);
+
+			// check if types match before re-using an existing
+			if (child) {
+				if (content.image_data) {
+					if (child.image_data != content.image_data) {
+						child = null;
+					}
+				} else if (content.clip_data) {
+					if (child.clip_data != content.clip_data) {
+						child = null;
+					}
+				}
+			}
+
+			// re-use existing
 			if (child) {
 				// -- move it to the correct index
 				this.children[index] = child;
@@ -479,14 +505,16 @@ class clip extends display_list {
 				if (content.image_data) {
 					child = new image(content.image_data);
 				} else if (content.clip_data) {
-					child = new clip.constructor(content.clip_data);
+					child = new clip(content.clip_data);
 					// -- if frame is not specified then the sub clip should play
 					if (!content.frame_no) {
 						child.play();
 					}
 				} else {
-					throw 'unknown content type in animation';
+					// defaults to empty display list
+					child = new display_list();
 				}
+				child.name = content.instance_name;
 				child.parent = this;
 				this.children[index] = child;
 			}

@@ -399,6 +399,10 @@ class clip_entry extends transform {
 		entry.frame_no = frame_no;
 		return entry;
 	}
+
+	static display_list_data (instance_name, x, y, scale_x, scale_y, rotation, alpha) {
+		return new clip_entry(instance_name, x, y, scale_x, scale_y, rotation, alpha);
+	}
 }
 
 // -- clip frame --------------------------------------------------------------------
@@ -434,6 +438,15 @@ class clip_frame {
 			instance_name = this.generate_instance_name('img_' + clip_data.name, clip_data);
 		}
 		const entry = clip_entry.clip_data(instance_name, clip_data, x, y, scale_x, scale_y, rotation, alpha, frame_no);
+		this.content.push(entry);
+		return this;
+	}
+
+	add_display_list_content (instance_name, x, y, scale_x, scale_y, rotation, alpha) {
+		if (!instance_name) {
+			throw 'cannot add display list to frame data without instance name';
+		}
+		const entry = clip_entry.display_list_data(instance_name, x, y, scale_x, scale_y, rotation, alpha);
 		this.content.push(entry);
 		return this;
 	}

@@ -91,6 +91,75 @@ function create_combined_clip_data (name, clips) {
 	return all_clip_data.get(name);
 }
 
+function create_clip (name, frames, defer_link) {
+	const clip_data = new geometry.clip_data(name);
+	if (frames && Array.isArray(frames)) {
+		for (const frame of frames) {
+			// special case where each frame is only a single image
+			if (typeof frame == 'string') {
+				const frame_data = clip_data.add_frame(null);
+				frame_data.add_image_content(
+					null,
+					all_image_data.get(frame),
+					0, 0, 1, 1, 0, 1
+				);
+
+			} else {
+				const frame_data = clip_data.add_frame(frame.label);
+				if (frame.content) {
+					for (const entry of frame.content) {
+						if (entry.image) {
+							frame_data.add_image_content(
+								entry.name,
+								entry.image,
+								entry.transform[0],
+								entry.transform[1],
+								entry.transform[2],
+								entry.transform[3],
+								entry.transform[4],
+								entry.transform[5]
+							);
+						} else if (entry.clip) {
+							frame_data.add_clip_content(
+								entry.name,
+								entry.clip,
+								entry.transform[0],
+								entry.transform[1],
+								entry.transform[2],
+								entry.transform[3],
+								entry.transform[4],
+								entry.transform[5],
+								entry.transform[6]
+							);
+						} else {
+							// do we need to detect unrecognised entries here?
+							frame_data.add_display_list_content(
+								entry.name,
+								entry.transform[0],
+								entry.transform[1],
+								entry.transform[2],
+								entry.transform[3],
+								entry.transform[4],
+								entry.transform[5],
+								entry.transform[6]
+							);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	all_clip_data.set(name, clip_data);
+	if (!defer_link) {
+		clip_data.link_resource({
+			get_image_data : get_image_data,
+			get_clip_data : get_clip_data,
+		});
+	}
+	return clip_data;
+}
+
 function get_cached (type, name, url, retrieve_callback) {
 	const key = type + ':' + name + ':' + url;
 	let entry = cache.get(key);
@@ -218,53 +287,7 @@ function require_asset (base_url, name) {
 		const clips_added = [];
 		if (entry.description.clips && Array.isArray(entry.description.clips)) {
 			for (const clip of entry.description.clips) {
-				const clip_data = new geometry.clip_data(clip.name);
-				if (clip.frames && Array.isArray(clip.frames)) {
-					for (const frame of clip.frames) {
-						// special case where each frame is only a single image
-						if (typeof frame == 'string') {
-							const frame_data = clip_data.add_frame(null);
-							frame_data.add_image_content(
-								null,
-								all_image_data.get(frame),
-								0, 0, 1, 1, 0, 1
-							);
-
-						} else {
-							const frame_data = clip_data.add_frame(frame.label);
-							if (frame.content) {
-								for (const entry of frame.content) {
-									if (entry.image) {
-										frame_data.add_image_content(
-											entry.name,
-											entry.image, // all_image_data.get(entry.image),
-											entry.transform[0],
-											entry.transform[1],
-											entry.transform[2],
-											entry.transform[3],
-											entry.transform[4],
-											entry.transform[5]
-										);
-									} else if (entry.clip) {
-										frame_data.add_clip_content(
-											entry.name,
-											entry.clip, //all_clip_data(entry.clip),
-											entry.transform[0],
-											entry.transform[1],
-											entry.transform[2],
-											entry.transform[3],
-											entry.transform[4],
-											entry.transform[5],
-											entry.transform[6]
-										);
-									}
-								}
-							}
-						}
-					}
-				}
-
-				all_clip_data.set(clip_data.name, clip_data);
+				const clip_data = create_clip(clip.name, clip.frames, true);
 				entry.object.clip_data[clip_data.name] = clip_data;
 				clips_added.push(clip_data);
 			}
@@ -293,4 +316,4 @@ function require_assets (base_url, names) {
 	return available;
 }
 
-export { query, require_asset, require_assets, require_json, require_image, require_text, get_image_data, get_clip_data, create_combined_clip_data, get_combined_clip_data };
+export { query, require_asset, require_assets, require_json, require_image, require_text, get_image_data, get_clip_data, create_clip, create_combined_clip_data, get_combined_clip_data };
