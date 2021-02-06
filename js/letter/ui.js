@@ -59,7 +59,7 @@ class touch_area {
 			this.event_handler.listen('touch_end', (touch_data) => {
 				this.handle_touch_end(touch_data);
 			});
-			this.event_handler.listen('touch_end', (touch_data) => {
+			this.event_handler.listen('touch_cancel', (touch_data) => {
 				this.handle_touch_cancel(touch_data);
 			});
 			this.event_handler.listen(dispatch.event_deactivate_context, () => {
