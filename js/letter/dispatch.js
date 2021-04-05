@@ -58,6 +58,14 @@ class update_list {
 		return this.list.length == 0;
 	}
 
+	first () {
+		return this.list[0].obj;
+	}
+
+	last () {
+		return this.list[this.list.length - 1].obj;
+	}
+
 	update (update_function, remove_on_return_true) {
 		// if we're already in an iteration, don't allow it to recurse
 		if (this.is_iterating) {
@@ -234,7 +242,7 @@ class event_dispatch {
 		if (event_name == undefined) {
 			throw 'cannot add listener with undefined event name';
 		}
-		
+
 		let listeners = this.events.get(event_name);
 		if (listeners == undefined) {
 			listeners = [];
@@ -248,7 +256,7 @@ class event_dispatch {
 
 	remove_listener (tag, event_name) {
 		if (event_name == undefined) {
-			for (const [name, _] of this.events) {
+			for (const [name] of this.events) {
 				this.remove_listener(tag, name);
 			}
 			return;
@@ -357,7 +365,7 @@ class context {
 		this.root = (parent != null) ? parent.root : this;
 
 		// which derivatives of this context are more current than this one
-		this.current_stack = [];
+		this.derivatives = new update_list();
 
 		// the dispatch and flags that are set at this level
 		this.frame_dispatch = new frame_dispatch();
@@ -399,43 +407,53 @@ class context {
 
 	derive () {
 		const derived = new context(this);
-		this.current_stack.push(derived);			
+		this.derivatives.add(derived);
 		// this automatically becomes active, cancel interactions in play on all other contexts
-		this.root.cancel_all_besides(derived);
+		this.root.interrupt(derived);
 		return derived;
 	}
 
 	get_active () {
 		// if no derived have taken over then this context is current
-		if (this.current_stack.length == 0) {
+		if (this.derivatives.is_clear()) {
 			return this;
 		}
 
 		// otherwise defer to the most recent derived
-		return this.current_stack[this.current_stack.length - 1].get_active();
+		return this.derivatives.last().get_active();
 	}
-	
-	cancel_all_besides (besides_this_one) {
+
+	interrupt (besides_this_one) {
 		if (this != besides_this_one) {
-			this.event_dispatch.dispatch(event_cancel_context, {});			
-		}		
-		for (const child of this.current_stack) {
-			child.cancel_all_besides(besides_this_one);
-		}		
+			this.event_dispatch.dispatch(event_interrupt_context, this);
+		}
+		this.derivatives.update((child) => {
+			child.interrupt(besides_this_one);
+		});
+	}
+
+	on_dispose (tag, do_this) {
+		this.event_dispatch.add_listener(tag, event_dispose_context, do_this);
 	}
 
 	dispose () {
-		if (this.parent != null) {
-			// cancel all dervices contexts
-			this.cancel_all_besides(null);
+		// first dispose all children
+		if (this.derivatives != null) {
+			this.derivatives.update((child) => {
+				child.dispose();
+			});
+			this.derivatives = null;
+		}
 
-			let index = this.parent.current_stack.indexOf(this);
-			if (index >= 0) {
-				this.parent.current_stack.splice(index, 1);
-			}
+		// then clean up self
+		if (this.parent != null) {
+			this.event_dispatch.dispatch(event_interrupt_context, this);
+			this.event_dispatch.dispatch(event_dispose_context, this);
+
+			this.parent.derivatives.remove(this);
 			this.parent = null;
 		}
-		
+
 		if (this.frame_dispatch) {
 			this.frame_dispatch.dispose();
 			this.frame_dispatch = null;
@@ -447,6 +465,7 @@ class context {
 	}
 }
 
-export const event_cancel_context = 'event_cancel_context';
+export const event_interrupt_context = 'event_interrupt_context';
+export const event_dispose_context = 'event_dispose_context';
 
 export { update_list, frame_dispatch, event_dispatch, event_handler, context };
