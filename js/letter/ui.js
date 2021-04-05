@@ -62,7 +62,7 @@ class touch_area {
 			this.event_handler.listen('touch_cancel', (touch_data) => {
 				this.handle_touch_cancel(touch_data);
 			});
-			this.event_handler.listen(dispatch.event_deactivate_context, () => {
+			this.event_handler.listen(dispatch.event_cancel_context, () => {
 				this.cancel_touch();
 			});
 		} else if (!value && this.event_handler.did_listen) {
@@ -244,7 +244,7 @@ class button {
 		this.touch_area_outer.on_touch_end = () => {
 			this.handle_button_release();
 		};
-		this.event_handler.listen(dispatch.event_deactivate_context, () => {
+		this.event_handler.listen(dispatch.event_cancel_context, () => {
 			this.context.frame_dispatch.remove(dispatch_delayed_button);
 		});
 

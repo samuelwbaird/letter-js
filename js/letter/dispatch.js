@@ -231,6 +231,10 @@ class event_dispatch {
 	}
 
 	add_listener (tag, event_name, action) {
+		if (event_name == undefined) {
+			throw 'cannot add listener with undefined event name';
+		}
+		
 		let listeners = this.events.get(event_name);
 		if (listeners == undefined) {
 			listeners = [];
@@ -244,7 +248,7 @@ class event_dispatch {
 
 	remove_listener (tag, event_name) {
 		if (event_name == undefined) {
-			for (const [name] of this.events) {
+			for (const [name, _] of this.events) {
 				this.remove_listener(tag, name);
 			}
 			return;
@@ -361,6 +365,14 @@ class context {
 		this.flags = new Map();
 	}
 
+	root () {
+		if (this.parent != null) {
+			return this.parent.root();
+		} else {
+			return this;
+		}
+	}
+
 	update () {
 		this.frame_dispatch.update();
 		this.event_dispatch.dispatch_deferred();
@@ -369,7 +381,6 @@ class context {
 	reset () {
 		this.frame_dispatch.clear();
 		this.event_dispatch.clear_deferred();
-
 	}
 
 	set (name, value) {
@@ -386,38 +397,13 @@ class context {
 		return default_value;
 	}
 
-	/*
-	derive (active) {
+	derive () {
 		const derived = new context(this);
-		if (active) {
-
-		}
+		this.current_stack.push(derived);			
+		// this automatically becomes active, cancel interactions in play on all other contexts
+		this.root.cancel_all_besides(derived);
 		return derived;
 	}
-	*/
-
-	/* TODO: work out what to do with this
-	activate () {
-		if (this.active) {
-			// TODO: move to the front of the queue in the parent
-			return;
-		}
-
-		// add to the parent derived
-		this.active = true;
-
-		// override on the parent
-		// 			this.event_dispatch.clear_deferred();
-	}
-
-	deactivate () {
-		// TODO deactivate context event
-		// disable (and send a cancel all message to all listeners)
-
-		this.active = false;
-
-	}
-	*/
 
 	get_active () {
 		// if no derived have taken over then this context is current
@@ -428,9 +414,28 @@ class context {
 		// otherwise defer to the most recent derived
 		return this.current_stack[this.current_stack.length - 1].get_active();
 	}
+	
+	cancel_all_besides (besides_this_one) {
+		if (this != besides_this_one) {
+			this.event_dispatch.dispatch(event_cancel_context, {});			
+		}		
+		for (const child of this.current_stack) {
+			child.cancel_all_besides(besides_this_one);
+		}		
+	}
 
 	dispose () {
-		this.deactivate();
+		if (this.parent != null) {
+			// cancel all dervices contexts
+			this.cancel_all_besides(null);
+
+			let index = this.parent.current_stack.indexOf(this);
+			if (index >= 0) {
+				this.parent.current_stack.splice(index, 1);
+			}
+			this.parent = null;
+		}
+		
 		if (this.frame_dispatch) {
 			this.frame_dispatch.dispose();
 			this.frame_dispatch = null;
@@ -442,7 +447,6 @@ class context {
 	}
 }
 
-export const event_activate_context = 'event_activate_context';
-export const event_deactivate_context = 'event_deactivate_context';
+export const event_cancel_context = 'event_cancel_context';
 
 export { update_list, frame_dispatch, event_dispatch, event_handler, context };

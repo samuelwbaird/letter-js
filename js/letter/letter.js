@@ -120,6 +120,12 @@ class app_node {
 		return ta;
 	}
 
+	create_modal_context () {
+		const modal_context = this.context.derive();
+		this.add_disposable(modal_context);
+		return modal_context;
+	}
+
 	update () {
 		if (this.tween_manager) {
 			this.tween_manager.update();
