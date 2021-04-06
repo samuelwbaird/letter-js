@@ -396,8 +396,8 @@ class context {
 	}
 
 	get (name, default_value = null) {
-		if (this.flags[name]) {
-			return this.flags[name];
+		if (this.flags.has(name)) {
+			return this.flags.get(name);
 		}
 		if (this.parent) {
 			return this.parent.get(name);
