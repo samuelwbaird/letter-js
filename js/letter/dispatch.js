@@ -432,8 +432,12 @@ class context {
 		});
 	}
 
-	on_dispose (tag, do_this) {
-		this.event_dispatch.add_listener(tag, event_dispose_context, do_this);
+	on_dispose (tag_or_do_this, do_this) {
+		if (do_this == null) {
+			this.event_dispatch.add_listener(tag_or_do_this, event_dispose_context, tag_or_do_this);
+		} else {
+			this.event_dispatch.add_listener(tag_or_do_this, event_dispose_context, do_this);
+		}
 	}
 
 	dispose () {
