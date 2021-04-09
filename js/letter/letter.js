@@ -47,17 +47,21 @@ class app_node {
 		child.app = this.app;
 		child.screen = this.screen;
 		child.context = this.context;
-		child.prepare();
 
 		// view_parent = false to not add, or this app_nodes view by default
-		if (view_parent == undefined) {
-			view_parent = this.view;
+		if (child.view != null) {
+			child.prepare();
+
+			if (view_parent == undefined) {
+				view_parent = this.view;
+			}
+			if (view_parent) {
+				view_parent.add(child.view);
+			}
+
+			// begin is called only once the view is added
+			child.begin();
 		}
-		if (view_parent) {
-			view_parent.add(child.view);
-		}
-		// begin is called only once the view is added
-		child.begin();
 
 		return child;
 	}
