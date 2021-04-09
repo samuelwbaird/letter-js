@@ -35,9 +35,9 @@ class touch_area {
 			this.is_touched = false;
 			if (this.on_touch_cancel) {
 				this.on_touch_cancel(this);
-			}			
+			}
 		}
-		
+
 		this.is_touched = false;
 		this.is_touch_over = false;
 		this.touch_id = null;
@@ -347,96 +347,107 @@ class button {
 }
 
 class scroll_behaviour {
-	
+
 	constructor (touch_area, view_width, view_height, scroll_parent) {
 		this.touch_area = touch_area;
 		this.view_width = view_width;
 		this.view_height = view_height;
 		this.scroll_parent = scroll_parent;
-		
+
 		this.content_x = 0;
 		this.content_y = 0;
+		this.momentum_x = 0;
+		this.momentum_y = 0;
+
+		this.damping = 0.95;
+		this.stretch = 0.1;
+		this.snap = 0.5;
+
 		this.set_content_size(view_width, view_height);
-		
-		this.touch_area.on_touch_begin = () => {
-		};
+
 		this.touch_area.on_touch_move = (ta) => {
 			if (ta.is_touched) {
 				if (this.scroll_x) {
-					let max_x = (this.content_width - this.view_width);
+					const max_x = (this.content_width - this.view_width);
 					if (this.content_x < 0 && ta.move_distance.x > 0) {
-						this.content_x -= ta.move_distance.x * 0.25;						
+						this.content_x -= ta.move_distance.x * this.stretch;
 					} else if (this.content_x > max_x && ta.move_distance.x < 0) {
-						this.content_x -= ta.move_distance.x * 0.25;
+						this.content_x -= ta.move_distance.x * this.stretch;
 					} else {
 						this.content_x -= ta.move_distance.x;
 					}
+
+					this.momentum_x = -ta.move_distance.x;
 				}
 				if (this.scroll_y) {
-					let max_y = (this.content_height - this.view_height);
+					const max_y = (this.content_height - this.view_height);
 					if (this.content_y < 0 && ta.move_distance.y > 0) {
-						this.content_y -= ta.move_distance.y * 0.25;						
+						this.content_y -= ta.move_distance.y * this.stretch;
 					} else if (this.content_y > max_y && ta.move_distance.y < 0) {
-						this.content_y -= ta.move_distance.y * 0.25;
+						this.content_y -= ta.move_distance.y * this.stretch;
 					} else {
 						this.content_y -= ta.move_distance.y;
 					}
+
+					this.momentum_y = -ta.move_distance.y;
 				}
 			}
 		};
-		this.touch_area.on_touch_end = () => {
-		};
-		
+
 	}
-	
+
 	set_content_size (width, height) {
 		this.content_width = width;
 		this.content_height = height;
 		this.scroll_x = (this.content_width > this.view_width);
 		this.scroll_y = (this.content_height > this.view_height);
 	}
-	
+
 	set_position (x, y) {
 		this.content_x = x;
 		this.content_y = y;
+		this.momentum_x = 0;
+		this.momentum_y = 0;
 		this.touch_area.cancel_touch();
 	}
-	
+
 	update () {
 		// bounce back in when not touched
 		if (!this.touch_area.is_touched) {
 			if (this.scroll_x) {
-				let max_x = (this.content_width - this.view_width);
+				this.content_x += this.momentum_x;
+
+				const max_x = (this.content_width - this.view_width);
 				if (this.content_x < 0) {
-					this.content_x *= 0.5;
+					this.content_x *= this.snap;
 				} else if (this.content_x > max_x) {
-					this.content_x = max_x + (this.content_x - max_x) * 0.5;
+					this.content_x = max_x + (this.content_x - max_x) * this.snap;
 				}
-			}		
+			}
 			if (this.scroll_y) {
-				let max_y = (this.content_height - this.view_height);
+				this.content_y += this.momentum_y;
+
+				const max_y = (this.content_height - this.view_height);
 				if (this.content_y < 0) {
-					this.content_y *= 0.5;
+					this.content_y *= this.snap;
 				} else if (this.content_y > max_y) {
-					this.content_y = max_y + (this.content_y - max_y) * 0.5;
+					this.content_y = max_y + (this.content_y - max_y) * this.snap;
 				}
-			}		
+			}
 		}
-		
-		// track momemtum
-		
-		
-		
+
+		this.momentum_x *= this.damping;
+		this.momentum_y *= this.damping;
+
 		// update scroll parent if we have it
 		if (this.scroll_parent != null) {
-			
 			this.scroll_parent.x = -this.content_x;
 			this.scroll_parent.y = -this.content_y;
 		}
 	}
-	
+
 	dispose () {
-		
+
 	}
 }
 

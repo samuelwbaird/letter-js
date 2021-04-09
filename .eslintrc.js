@@ -30,8 +30,10 @@ module.exports = {
 		],
 
 		'array-bracket-spacing': ['error', 'never'],
+		
 		'block-spacing': ['error', 'always'],
-		'brace-style': ['error', '1tbs'],
+		'brace-style': ['error', '1tbs', { 'allowSingleLine': true }],
+		
 		'comma-dangle': ['error', 'always-multiline'],
 		'comma-spacing': ['error', { "before": false, "after": true }],
 		'new-parens': 'error',
@@ -48,6 +50,9 @@ module.exports = {
 		'prefer-const': 'error',
 		'no-loop-func': 'error',
 		'no-var': 'error',
+		
+		// leave this one out for now due to shared module convenience
+		'no-unused-vars': 0, 
 		
 	}
 };
