@@ -106,7 +106,7 @@ function create_clip (name, frames, defer_link) {
 
 			} else {
 				const frame_data = clip_data.add_frame(frame.label);
-				if (frame.content) {
+				if (frame.content && Array.isArray(frame.content)) {
 					for (const entry of frame.content) {
 						if (entry.image) {
 							frame_data.add_image_content(
@@ -275,11 +275,13 @@ function require_asset (base_url, name) {
 
 		// load all supplied images for each sheet
 		for (const sheet of entry.description.sheets) {
-			for (const e of sheet.entries) {
-				// add an image data entry per image
-				const image_data = new geometry.image_data(e.name, sheet.image, e.xy, e.uv);
-				all_image_data.set(e.name, image_data);
-				entry.object.image_data[e.name] = image_data;
+			if (Array.isArray(sheet.entries)) {
+				for (const e of sheet.entries) {
+					// add an image data entry per image
+					const image_data = new geometry.image_data(e.name, sheet.image, e.xy, e.uv);
+					all_image_data.set(e.name, image_data);
+					entry.object.image_data[e.name] = image_data;
+				}
 			}
 		}
 
@@ -305,6 +307,15 @@ function require_asset (base_url, name) {
 	});
 }
 
+function late_link_clips (alert_on_error) {
+	for (const cd of all_clip_data.values()) {
+		cd.link_resource({
+			get_image_data : get_image_data,
+			get_clip_data : get_clip_data,
+		}, alert_on_error);
+	}
+}
+
 function require_assets (base_url, names) {
 	// return true if all requested assets are available
 	let available = true;
@@ -316,4 +327,4 @@ function require_assets (base_url, names) {
 	return available;
 }
 
-export { query, require_asset, require_assets, require_json, require_image, require_text, get_image_data, get_clip_data, create_clip, create_combined_clip_data, get_combined_clip_data };
+export { query, require_asset, require_assets, require_json, require_image, require_text, get_image_data, get_clip_data, create_clip, create_combined_clip_data, get_combined_clip_data, late_link_clips };
