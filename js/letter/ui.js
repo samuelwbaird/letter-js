@@ -512,10 +512,10 @@ class canvas_screen  {
 
 		if (evt.changedTouches) {
 			for (const touch of evt.changedTouches) {
-				event_dispatch.defer(event_name, { id : touch.identifier, time : Date.now, x : (touch.pageX - this.canvas.offsetLeft) * scale_x, y : (touch.pageY - this.canvas.offsetTop) * scale_y });
+				event_dispatch.defer(event_name, { id : touch.identifier, time : Date.now(), x : (touch.pageX - this.canvas.offsetLeft) * scale_x, y : (touch.pageY - this.canvas.offsetTop) * scale_y });
 			}
 		} else {
-			event_dispatch.defer(event_name, { id : 1, time : Date.now, x : (evt.pageX - this.canvas.offsetLeft) * scale_x, y : (evt.pageY - this.canvas.offsetTop) * scale_y });
+			event_dispatch.defer(event_name, { id : 1, time : Date.now(), x : (evt.pageX - this.canvas.offsetLeft) * scale_x, y : (evt.pageY - this.canvas.offsetTop) * scale_y });
 		}
 	}
 
