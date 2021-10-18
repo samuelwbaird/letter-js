@@ -5,6 +5,8 @@ import * as geometry from  './geometry.js';
 import * as dispatch from './dispatch.js';
 import * as display from  './display.js';
 
+// TODO: migrate all touch area events here too and make sure they are exported correctly
+
 export const config_button_touch_outer_padding = 'config_button_touch_outer_padding';
 export const event_button_down = 'event_button_down';
 export const event_button_up = 'event_button_up';
@@ -534,8 +536,8 @@ class canvas_screen  {
 		}
 
 		this.content_scale = scale;
-		this.width = this.canvas.width / scale;
-		this.height = this.canvas.height / scale;
+		this.width = Math.floor(this.canvas.width / scale);
+		this.height = Math.floor(this.canvas.height / scale);
 
 		this.root_view.scale_x = scale;
 		this.root_view.scale_y = scale;
