@@ -24,6 +24,8 @@ function _query (method, url, data, successHandler, errorHandler, timeout) {
 			} else {
 				errorHandler && errorHandler(status);
 			}
+			successHandler = null;
+			errorHandler = null;
 		}
 	};
 	if (timeout != undefined) {

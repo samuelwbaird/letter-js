@@ -311,15 +311,17 @@ class image extends display_list {
 	}
 
 	content_render (ctx, transform) {
-		ctx.save();
-		ctx.translate(transform.x, transform.y);
-		ctx.rotate(transform.rotation);
-		ctx.scale(transform.scale_x, transform.scale_y);
-		ctx.globalAlpha = transform.alpha;
-		const src = this.image_data.source_rect;
-		const dst = this.image_data.dest_rect;
-		ctx.drawImage(this.image_data.texture, src.x, src.y, src.width, src.height, dst.x, dst.y, dst.width, dst.height);
-		ctx.restore();
+		if (this.image_data) {
+			ctx.save();
+			ctx.translate(transform.x, transform.y);
+			ctx.rotate(transform.rotation);
+			ctx.scale(transform.scale_x, transform.scale_y);
+			ctx.globalAlpha = transform.alpha;
+			const src = this.image_data.source_rect;
+			const dst = this.image_data.dest_rect;
+			ctx.drawImage(this.image_data.texture, src.x, src.y, src.width, src.height, dst.x, dst.y, dst.width, dst.height);
+			ctx.restore();
+		}
 	}
 
 	content_bounds () {
