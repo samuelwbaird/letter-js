@@ -75,6 +75,16 @@ class app_node {
 		}
 	}
 
+	remove_all_children () {
+		if (this.children) {
+			const old_list = this.children;
+			this.children = null;
+			for (const child of old_list) {
+				child.dispose();
+			}
+		}
+	}
+
 	get_tween_manager () {
 		if (!this.tween_manager) {
 			this.tween_manager = new tween.manager();
