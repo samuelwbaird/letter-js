@@ -158,8 +158,8 @@ const frame_dispatch_update_function = function (entry) {
 	if (entry.repeat_fn) {
 		entry.repeat_fn();
 	}
-	if (entry.count && entry.count > 0) {
-		if (--entry.count == 0) {
+	if (entry.count) {
+		if (--entry.count <= 0) {
 			if (entry.delay_fn) {
 				entry.delay_fn();
 			}
@@ -178,6 +178,11 @@ class frame_dispatch {
 
 	// do this after a delay
 	delay (count, fn, tag) {
+		count = Math.floor(count);
+		if (count <= 0) {
+			count = 1;
+		}
+		
 		this.update_list.add({
 			type : 'delay',
 			count : count,
@@ -187,6 +192,11 @@ class frame_dispatch {
 
 	// repeat this a number of times
 	recur (count, fn, tag) {
+		count = Math.floor(count);
+		if (count <= 0) {
+			return;
+		}
+		
 		this.update_list.add({
 			type : 'recur',
 			count : count,
