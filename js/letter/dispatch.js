@@ -158,8 +158,8 @@ const frame_dispatch_update_function = function (entry) {
 	if (entry.repeat_fn) {
 		entry.repeat_fn();
 	}
-	if (entry.count) {
-		if (--entry.count <= 0) {
+	if (entry.count && entry.count > 0) {
+		if (--entry.count == 0) {
 			if (entry.delay_fn) {
 				entry.delay_fn();
 			}
@@ -206,7 +206,11 @@ class frame_dispatch {
 
 	// call this every time
 	hook (fn, tag) {
-		this.recur(-1, fn, tag);
+		this.update_list.add({
+			type : 'recur',
+			count : -1,		// infinite repeat
+			repeat_fn : fn,
+		}, tag);
 	}
 
 	// call this once only
