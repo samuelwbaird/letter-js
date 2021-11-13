@@ -32,6 +32,7 @@ class app_node {
 			this.disposables = [];
 		}
 		this.disposables.push(disposable);
+		return disposable;
 	}
 
 	// override
