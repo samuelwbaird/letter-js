@@ -186,8 +186,8 @@ class color {
 		return 'rgb(' + Math.floor(this.r * 255) + ',' + Math.floor(this.g * 255) + ',' + Math.floor(this.b * 255) + ')';
 	}
 
-	static grey (grey_level) {
-		return new color(grey_level, grey_level, grey_level, 1);
+	static grey (grey_level, alpha) {
+		return new color(grey_level, grey_level, grey_level, alpha ? alpha : 1);
 	}
 }
 
