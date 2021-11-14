@@ -80,8 +80,8 @@ class app_node {
 		if (this.children) {
 			const old_list = this.children;
 			this.children = null;
-			for (const child of old_list) {
-				child.dispose();
+			for (const update_list_entry of old_list.list) {
+				update_list_entry.obj.dispose();
 			}
 		}
 	}
