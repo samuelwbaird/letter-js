@@ -4,6 +4,11 @@
 import * as geometry from  './geometry.js';
 import * as resource from './resource.js';
 
+let default_freeze_scale = 1;
+function set_default_freeze_scale (scale) {
+	default_freeze_scale = scale;
+}
+
 class display_list extends geometry.transform {
 	constructor (init_values) {
 		super(0, 0, 1, 1, 0, 1);
@@ -195,7 +200,7 @@ class display_list extends geometry.transform {
 			optional_bounds = this.bounds();
 		}
 		if (scale_factor == undefined) {
-			scale_factor = 1;
+			scale_factor = default_freeze_scale;
 		}
 
 		this.frozen_bounds = optional_bounds;
@@ -718,4 +723,4 @@ for (const this_class_name in class_list) {
 	}
 }
 
-export { display_list, image, clip, rect, circle, canvas, label };
+export { display_list, image, clip, rect, circle, canvas, label, set_default_freeze_scale };
