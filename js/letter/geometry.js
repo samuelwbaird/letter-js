@@ -269,9 +269,11 @@ class font {
 					current_line_width = 0;
 					last_word_count = 0;
 				}
-				// add char to the current word
-				current_word = current_word + char;
-				current_word_width += width;
+				// add char to the current word (unless that word is longer than word wrap)
+				if (current_word_width < word_wrap) {
+					current_word = current_word + char;
+					current_word_width += width;
+				}
 				if (can_break) {
 					current_line = current_line + current_word;
 					current_line_width += current_word_width;
