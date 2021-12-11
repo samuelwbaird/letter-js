@@ -307,9 +307,15 @@ class image extends display_list {
 
 	constructor (image_data_or_name, init_values) {
 		super(init_values);
-
+		this.set_image(image_data_or_name);
+	}
+	
+	set_image(image_data_or_name) {
 		if (typeof image_data_or_name == 'string') {
 			this.image_data = resource.get_image_data(image_data_or_name);
+			if (!this.image_data) {
+				console.log('did not find image ' + image_data_or_name);
+			}
 		} else {
 			this.image_data = image_data_or_name;
 		}
