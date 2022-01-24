@@ -120,6 +120,24 @@ class tween {
 
 		return this.frame >= this.easing.length;
 	}
+	
+	complete () {
+		const ratio = this.easing[this.easing.length - 1];
+		const inverse = 1 - ratio;
+
+		for (const k in this.properties) {
+			const prop = this.properties[k];
+			this.target[k] = (prop.initial * inverse) + (prop.final * ratio);
+		}
+
+		this.frame = this.easing.length;
+		const on_complete = this.on_complete;
+		this.on_complete = null;
+		if (on_complete) {
+			on_complete();
+		}
+		return true;
+	}
 }
 
 class manager {
@@ -140,6 +158,12 @@ class manager {
 		this.tweens.update((tween) => {
 			tween.update();
 		});
+	}
+	
+	complete_all () {
+		this.tweens.update((tween) => {
+			tween.complete();
+		});		
 	}
 
 	clear () {
