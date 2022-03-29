@@ -179,7 +179,7 @@ class color {
 		this.r = r;
 		this.g = g;
 		this.b = b;
-		this.alpha = alpha;
+		this.alpha = alpha ?? 1;
 	}
 
 	fill_style () {
