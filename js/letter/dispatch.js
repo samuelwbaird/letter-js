@@ -182,7 +182,7 @@ class frame_dispatch {
 		if (count <= 0) {
 			count = 1;
 		}
-		
+
 		this.update_list.add({
 			type : 'delay',
 			count : count,
@@ -196,7 +196,7 @@ class frame_dispatch {
 		if (count <= 0) {
 			return;
 		}
-		
+
 		this.update_list.add({
 			type : 'recur',
 			count : count,

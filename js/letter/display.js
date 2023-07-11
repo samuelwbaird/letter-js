@@ -309,8 +309,8 @@ class image extends display_list {
 		super(init_values);
 		this.set_image(image_data_or_name);
 	}
-	
-	set_image(image_data_or_name) {
+
+	set_image (image_data_or_name) {
 		if (typeof image_data_or_name == 'string') {
 			this.image_data = resource.get_image_data(image_data_or_name);
 			if (!this.image_data) {

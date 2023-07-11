@@ -120,7 +120,7 @@ class tween {
 
 		return this.frame >= this.easing.length;
 	}
-	
+
 	complete () {
 		const ratio = this.easing[this.easing.length - 1];
 		const inverse = 1 - ratio;
@@ -159,11 +159,11 @@ class manager {
 			tween.update();
 		});
 	}
-	
+
 	complete_all () {
 		this.tweens.update((tween) => {
 			tween.complete();
-		});		
+		});
 	}
 
 	clear () {
