@@ -10,24 +10,24 @@ import * as display from './display.js';
 import * as ui from './ui.js';
 import * as tween from './tween.js';
 
-// app_node, standard heavy weight object used to create a back bone heirachy of objects at runtime
+// appNode, standard heavy weight object used to create a back bone heirachy of objects at runtime
 // the app module also acts as a single instance of managing current scene, timer, events and screen fit
-// the app is made of a tree of app_nodes, each heavy weight objects
+// the app is made of a tree of appNodes, each heavy weight objects
 // that delimit the lifetime and update cycle of their child objects
 
-class app_node {
+class AppNode {
 
 	constructor () {
-		this.view = new display.display_list();
+		this.view = new display.DisplayList();
 
-		this.tween_manager = null;
-		this.frame_dispatch = null;
+		this.tweenManager = null;
+		this.frameDispatch = null;
 
 		this.children = null;
 		this.disposables = null;
 	}
 
-	add_disposable (disposable) {
+	addDisposable (disposable) {
 		if (!this.disposables) {
 			this.disposables = [];
 		}
@@ -39,9 +39,9 @@ class app_node {
 	prepare () {}
 	begin () {}
 
-	add (child, view_parent) {
+	add (child, viewParent) {
 		if (!this.children) {
-			this.children = new dispatch.update_list();
+			this.children = new dispatch.UpdateList();
 		}
 		this.children.add(child);
 
@@ -49,15 +49,15 @@ class app_node {
 		child.screen = this.screen;
 		child.context = this.context;
 
-		// view_parent = false to not add, or this app_nodes view by default
+		// viewParent = false to not add, or this appNodes view by default
 		if (child.view != null) {
 			child.prepare();
 
-			if (view_parent == undefined) {
-				view_parent = this.view;
+			if (viewParent == undefined) {
+				viewParent = this.view;
 			}
-			if (view_parent) {
-				view_parent.add(child.view);
+			if (viewParent) {
+				viewParent.add(child.view);
 			}
 
 			// begin is called only once the view is added
@@ -76,80 +76,80 @@ class app_node {
 		}
 	}
 
-	remove_all_children () {
+	removeAllChildren () {
 		if (this.children) {
-			const old_list = this.children;
+			const oldList = this.children;
 			this.children = null;
-			for (const update_list_entry of old_list.list) {
-				update_list_entry.obj.dispose();
+			for (const updateListEntry of oldList.list) {
+				updateListEntry.obj.dispose();
 			}
 		}
 	}
 
-	get_tween_manager () {
-		if (!this.tween_manager) {
-			this.tween_manager = new tween.manager();
+	getTweenManager () {
+		if (!this.tweenManager) {
+			this.tweenManager = new tween.Manager();
 		}
-		return this.tween_manager;
+		return this.tweenManager;
 	}
 
-	tween (target, easing, properties, optional_params) {
-		const t = new tween.tween(target, easing, properties, optional_params);
-		this.get_tween_manager().add(t);
+	tween (target, easing, properties, optionalParams) {
+		const t = new tween.Tween(target, easing, properties, optionalParams);
+		this.getTweenManager().add(t);
 		return t;
 	}
 
-	get_frame_dispatch () {
-		if (!this.frame_dispatch) {
-			this.frame_dispatch = new dispatch.frame_dispatch();
+	getFrameDispatch () {
+		if (!this.frameDispatch) {
+			this.frameDispatch = new dispatch.FrameDispatch();
 		}
-		return this.frame_dispatch;
+		return this.frameDispatch;
 	}
 
-	get_coroutine_manager () {
-		if (!this.coroutine_manager) {
-			this.coroutine_manager = new coroutine.coroutine_manager(this);
+	getCoroutineManager () {
+		if (!this.coroutineManager) {
+			this.coroutineManager = new coroutine.CoroutineManager(this);
 		}
-		return this.coroutine_manager;
+		return this.coroutineManager;
 	}
 
 	delay (count, fn, tag) {
-		this.get_frame_dispatch().delay(count, fn, tag);
+		this.getFrameDispatch().delay(count, fn, tag);
 	}
 
-	add_button (clip, action, init_values, context) {
-		const btn = new ui.button(clip, action, init_values, (context != null) ? context : this.context);
-		this.add_disposable(btn);
+	addButton (clip, action, initValues, context) {
+		const btn = new ui.Button(clip, action, initValues, (context != null) ? context : this.context);
+		this.addDisposable(btn);
 		return btn;
 	}
 
-	add_touch_area (display_object, padding, context) {
-		const ta = ui.touch_area.bounds(display_object, padding, (context != null) ? context : this.context);
-		this.add_disposable(ta);
+	addTouchArea (displayObject, padding, context) {
+		const ta = ui.TouchArea.bounds(displayObject, padding, (context != null) ? context : this.context);
+		this.addDisposable(ta);
 		return ta;
 	}
 
-	add_touch_area_rect (display_object, x, y, width, height, context) {
-		const ta = ui.touch_area.rect(display_object, new geometry.rect(x, y, width, height), (context != null) ? context : this.context);
-		this.add_disposable(ta);
+	addTouchAreaRect (displayObject, x, y, width, height, context) {
+		const ta = ui.TouchArea.rect(displayObject, new geometry.Rect(x, y, width, height), (context != null) ? context : this.context);
+		this.addDisposable(ta);
 		return ta;
 	}
 
-	create_modal_context () {
-		const modal_context = this.context.derive();
-		this.add_disposable(modal_context);
-		return modal_context;
+	createModalContext () {
+		const modalContext = this.context.derive();
+		this.addDisposable(modalContext);
+		return modalContext;
 	}
 
 	update () {
-		if (this.tween_manager) {
-			this.tween_manager.update();
+		if (this.tweenManager) {
+			this.tweenManager.update();
 		}
-		if (this.coroutine_manager) {
-			this.coroutine_manager.update();
+		if (this.coroutineManager) {
+			this.coroutineManager.update();
 		}
-		if (this.frame_dispatch) {
-			this.frame_dispatch.update();
+		if (this.frameDispatch) {
+			this.frameDispatch.update();
 		}
 		if (this.children) {
 			this.children.update((child) => {
@@ -160,7 +160,7 @@ class app_node {
 
 	dispose () {
 		if (this.view) {
-			this.view.remove_from_parent();
+			this.view.removeFromParent();
 		}
 
 		if (this.children) {
@@ -170,19 +170,19 @@ class app_node {
 			this.children = null;
 		}
 
-		if (this.tween_manager) {
-			this.tween_manager.dispose();
-			this.tween_manager = null;
+		if (this.tweenManager) {
+			this.tweenManager.dispose();
+			this.tweenManager = null;
 		}
 
-		if (this.coroutine_manager) {
-			this.coroutine_manager.dispose();
-			this.coroutine_manager = null;
+		if (this.coroutineManager) {
+			this.coroutineManager.dispose();
+			this.coroutineManager = null;
 		}
 
-		if (this.frame_dispatch) {
-			this.frame_dispatch.dispose();
-			this.frame_dispatch = null;
+		if (this.frameDispatch) {
+			this.frameDispatch.dispose();
+			this.frameDispatch = null;
 		}
 
 		if (this.disposables) {
@@ -200,24 +200,24 @@ class app_node {
 	}
 }
 
-// there should generally be one app object at the root of the app_node tree
+// there should generally be one app object at the root of the appNode tree
 // tying it in with the rest of the browser environment
 
-class app {
+class App {
 
 	constructor (screen) {
-		this.render_callback = new ui.render_callback();
-		this.fps = new ui.fixed_rate_timer(60);
-		this.animation_fps = new ui.fixed_rate_timer(60);
-		this.frame_dispatch = new dispatch.frame_dispatch();
+		this.renderCallback = new ui.RenderCallback();
+		this.fps = new ui.FixedRateTimer(60);
+		this.animationFps = new ui.FixedRateTimer(60);
+		this.frameDispatch = new dispatch.FrameDispatch();
 
 		this.screen = screen;
-		this.current_scene = null;
+		this.currentScene = null;
 
-		this.context = new dispatch.context();
+		this.context = new dispatch.Context();
 
 		if (this.screen) {
-			this.screen.set_context(this.context);
+			this.screen.setContext(this.context);
 		}
 	}
 
@@ -228,99 +228,99 @@ class app {
 		}
 
 		// animation frames
-		let requires_render = false;
-		const animation_frames = this.animation_fps.get_frames_due();
-		if (animation_frames > 0 && this.screen != null) {
-			requires_render = true;
-			for (let i = 0; i < animation_frames; i++) {
+		let requiresRender = false;
+		const animationFrames = this.animationFps.getFramesDue();
+		if (animationFrames > 0 && this.screen != null) {
+			requiresRender = true;
+			for (let i = 0; i < animationFrames; i++) {
 				// update animation heirachy and fire off on-complete events once done
-				const on_completes = [];
-				this.screen.root_view.update_animated_clips(this.animation_fps.delta, (callback) => {
-					on_completes.push(callback);
+				const onCompletes = [];
+				this.screen.rootView.updateAnimatedClips(this.animationFps.delta, (callback) => {
+					onCompletes.push(callback);
 				});
-				for (const callback of on_completes) {
+				for (const callback of onCompletes) {
 					callback();
 				}
 			}
 		}
 
 		// top level frame dispatch outside of all scenes and context
-		this.frame_dispatch.update();
+		this.frameDispatch.update();
 
 		// top level ui context dispatch include deferred events
-		this.context.get_active().update();
+		this.context.getActive().update();
 
 		// logical update frames
-		const update_frames = this.fps.get_frames_due();
-		if (update_frames > 0 && this.current_scene != null) {
-			requires_render = true;
-			for (let f = 0; f < update_frames; f++) {
-				if (this.current_scene != null) {
-					this.current_scene.update();
+		const updateFrames = this.fps.getFramesDue();
+		if (updateFrames > 0 && this.currentScene != null) {
+			requiresRender = true;
+			for (let f = 0; f < updateFrames; f++) {
+				if (this.currentScene != null) {
+					this.currentScene.update();
 				}
 			}
 		}
 
 		// if any of the above means we need to re-render the canvas then do it here
-		if (requires_render && this.screen != null) {
+		if (requiresRender && this.screen != null) {
 			this.screen.render();
 		}
 	}
 
-	set_frame_rate (new_fps, new_animation_fps, min_frames, max_frames, reset) {
-		if (!new_animation_fps) {
-			new_animation_fps = new_fps;
+	setFrameRate (newFps, newAnimationFps, minFrames, maxFrames, reset) {
+		if (!newAnimationFps) {
+			newAnimationFps = newFps;
 		}
-		this.fps.set_fps(new_fps, min_frames, max_frames, reset);
-		this.animation_fps.set_fps(new_animation_fps, min_frames, max_frames, reset);
+		this.fps.setFps(newFps, minFrames, maxFrames, reset);
+		this.animationFps.setFps(newAnimationFps, minFrames, maxFrames, reset);
 	}
 
 	pause () {
-		this.render_callback.stop();
+		this.renderCallback.stop();
 	}
 
 	resume () {
-		this.render_callback.start(() => {
+		this.renderCallback.start(() => {
 			this.update();
 		});
 	}
 
-	set_scene (scene) {
-		if (this.current_scene != null) {
-			this.current_scene.dispose();
-			this.current_scene = null;
+	setScene (scene) {
+		if (this.currentScene != null) {
+			this.currentScene.dispose();
+			this.currentScene = null;
 		}
 
 		this.context.reset();
 
 		if (scene) {
-			this.current_scene = scene;
-			this.current_scene.app = this;
-			this.current_scene.screen = this.screen;
-			this.current_scene.context = this.context;
+			this.currentScene = scene;
+			this.currentScene.app = this;
+			this.currentScene.screen = this.screen;
+			this.currentScene.context = this.context;
 
-			this.current_scene.prepare();
+			this.currentScene.prepare();
 			if (this.screen != null) {
-				this.screen.root_view.add(scene.view);
+				this.screen.rootView.add(scene.view);
 			}
-			this.current_scene.begin();
+			this.currentScene.begin();
 		}
 
 		this.fps.reset();
-		this.animation_fps.reset();
+		this.animationFps.reset();
 	}
 
 }
 
-function launch_app (canvas, width, height, fit) {
+function launchApp (canvas, width, height, fit) {
 	// create a screen object to map to the canvase if there is one
-	const screen = (canvas != null) ? new ui.canvas_screen(canvas, width, height, fit) : null;
+	const screen = (canvas != null) ? new ui.CanvasScreen(canvas, width, height, fit) : null;
 
 	// create an launch the app with an empty scene
-	const app_instance = new app(screen);
-	app_instance.set_scene(new app_node());
-	app_instance.resume();
-	return app_instance;
+	const appInstance = new App(screen);
+	appInstance.setScene(new AppNode());
+	appInstance.resume();
+	return appInstance;
 }
 
-export { geometry, dispatch, coroutine, state, resource, display, ui, tween, app_node, launch_app };
+export { geometry, dispatch, coroutine, state, resource, display, ui, tween, AppNode, launchApp };

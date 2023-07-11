@@ -4,9 +4,9 @@
 
 import * as dispatch from './dispatch.js';
 
-class easing {
+class Easing {
 
-	static from_formula (frames, formula) {
+	static fromFormula (frames, formula) {
 		const out = [];
 		const scale = 1 / frames;
 		for (let i = 1; i <= frames; i++) {
@@ -17,25 +17,25 @@ class easing {
 	}
 
 	static linear (frames) {
-		return easing.from_formula(frames, (ratio) => {
+		return Easing.fromFormula(frames, (ratio) => {
 			return ratio;
 		});
 	}
 
-	static ease_in (frames) {
-		return easing.from_formula(frames, (ratio) => {
+	static easeIn (frames) {
+		return Easing.fromFormula(frames, (ratio) => {
 			return ratio * ratio;
 		});
 	}
 
-	static ease_out (frames) {
-		return easing.from_formula(frames, (ratio) => {
+	static easeOut (frames) {
+		return Easing.fromFormula(frames, (ratio) => {
 			return 1 - (1 - ratio) * (1 - ratio);
 		});
 	}
 
-	static ease_inout (frames) {
-		return easing.from_formula(frames, (ratio) => {
+	static easeInout (frames) {
+		return Easing.fromFormula(frames, (ratio) => {
 			ratio = ratio * 2;
 			if (ratio < 1) {
 				return ratio * ratio * 0.5;
@@ -66,16 +66,16 @@ class easing {
 
 }
 
-class tween {
-	constructor (target, easing, properties, optional_params) {
+class Tween {
+	constructor (target, easing, properties, optionalParams) {
 		this.target = target;
 		this.easing = easing;
-		// backwards compatibility, if optional_params is a function, it is the on_complete
-		if (typeof optional_params == 'function') {
-			this.on_complete = optional_params;
-		} else if (optional_params) {
-			this.on_complete = optional_params.on_complete;
-			this.delay = optional_params.delay;
+		// backwards compatibility, if optionalParams is a function, it is the onComplete
+		if (typeof optionalParams == 'function') {
+			this.onComplete = optionalParams;
+		} else if (optionalParams) {
+			this.onComplete = optionalParams.onComplete;
+			this.delay = optionalParams.delay;
 		}
 
 		// gather start and end values for all tweened properties
@@ -110,10 +110,10 @@ class tween {
 
 			// return true if complete
 			if (this.frame == this.easing.length) {
-				const on_complete = this.on_complete;
-				this.on_complete = null;
-				if (on_complete) {
-					on_complete();
+				const onComplete = this.onComplete;
+				this.onComplete = null;
+				if (onComplete) {
+					onComplete();
 				}
 			}
 		}
@@ -131,26 +131,26 @@ class tween {
 		}
 
 		this.frame = this.easing.length;
-		const on_complete = this.on_complete;
-		this.on_complete = null;
-		if (on_complete) {
-			on_complete();
+		const onComplete = this.onComplete;
+		this.onComplete = null;
+		if (onComplete) {
+			onComplete();
 		}
 		return true;
 	}
 }
 
-class manager {
+class Manager {
 
 	constructor () {
-		this.tweens = new dispatch.update_list();
+		this.tweens = new dispatch.UpdateList();
 	}
 
 	add (tween) {
 		this.tweens.add(tween, tween.target);
 	}
 
-	remove_tweens_of (target) {
+	removeTweensOf (target) {
 		this.tweens.remove(target);
 	}
 
@@ -160,7 +160,7 @@ class manager {
 		});
 	}
 
-	complete_all () {
+	completeAll () {
 		this.tweens.update((tween) => {
 			tween.complete();
 		});
@@ -177,4 +177,4 @@ class manager {
 
 }
 
-export { easing, tween, manager };
+export { Easing, Tween, Manager };

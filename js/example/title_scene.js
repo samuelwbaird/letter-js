@@ -2,43 +2,43 @@
 // and 2 frame animation used to create a button
 // copyright 2020 Samuel Baird MIT Licence
 
-import { geometry, resource, tween, app_node } from '../letter/letter.js';
+import { geometry, resource, tween, AppNode } from '../letter/letter.js';
 
-class title_scene extends app_node {
+class TitleScene extends AppNode {
 	prepare () {
-		resource.require_asset('example_assets/', 'map_x1');
-		resource.require_asset('example_assets/', 'test_x1');
+		resource.requireAsset('example_assets/', 'map_x1');
+		resource.requireAsset('example_assets/', 'test_x1');
 	}
 
 	begin () {
-		this.view.add_rect(300, 460, geometry.color.black, {
+		this.view.addRect(300, 460, geometry.Color.black, {
 			x: 10,
 			y: 10,
 		});
 
-		const map = this.view.add_image('map_background', { x : 160, y : 240, scale_x : 1 });
-		map.add_circle(30, new geometry.color(0.5, 1, 0.5, 1), { y : 100 });
-		map.add_image('map_marker', { x : 0, y : 100 });
+		const map = this.view.addImage('map_background', { x : 160, y : 240, scaleX : 1 });
+		map.addCircle(30, new geometry.Color(0.5, 1, 0.5, 1), { y : 100 });
+		map.addImage('map_marker', { x : 0, y : 100 });
 
-		const font = new geometry.font(this.screen.ctx, 36, 'sans-serif', 'center');
-		map.add_label(font, 'Testing Text', new geometry.color(0.5, 0.1, 0.5, 1), { x : 0, y : -50 }).freeze();
+		const font = new geometry.Font(this.screen.ctx, 36, 'sans-serif', 'center');
+		map.addLabel(font, 'Testing Text', new geometry.Color(0.5, 0.1, 0.5, 1), { x : 0, y : -50 }).freeze();
 
-		this.tween(map, tween.easing.linear(60 * 20), { rotation : 20, scale_x : 0.5, scale_y : 0.5 });
+		this.tween(map, tween.Easing.linear(60 * 20), { rotation : 20, scaleX : 0.5, scaleY : 0.5 });
 
-		const small_font = new geometry.font(this.screen.ctx, 18, 'serif', 'center');
-		console.log(small_font.breaklines('Testing a lot of text to check for breaklines. I hope this works ok', 500));
-		console.log(small_font.breaklines('Testing a lot of text to check for breaklines. I hope this works ok', 400));
-		console.log(small_font.breaklines('Testing a lot of text to check for breaklines. I hope this works ok', 300));
-		this.view.add_label(small_font, 'Testing a lot of text to check for breaklines. I hope this works ok', geometry.color.white, {
-			word_wrap : 200,
+		const smallFont = new geometry.Font(this.screen.ctx, 18, 'serif', 'center');
+		console.log(smallFont.breaklines('Testing a lot of text to check for breaklines. I hope this works ok', 500));
+		console.log(smallFont.breaklines('Testing a lot of text to check for breaklines. I hope this works ok', 400));
+		console.log(smallFont.breaklines('Testing a lot of text to check for breaklines. I hope this works ok', 300));
+		this.view.addLabel(smallFont, 'Testing a lot of text to check for breaklines. I hope this works ok', geometry.Color.white, {
+			wordWrap : 200,
 			x : 160,
 			y : 320,
 		});
 
-		const play = this.view.add_clip('button',  { x : 160, y : 240 });
-		this.add_button(play, () => {
+		const play = this.view.addClip('button',  { x : 160, y : 240 });
+		this.addButton(play, () => {
 			console.log('did play');
-			if (map.is_frozen) {
+			if (map.isFrozen) {
 				map.unfreeze();
 			} else {
 				map.freeze(null, 0.1);
@@ -54,4 +54,4 @@ class title_scene extends app_node {
 	}
 }
 
-export default title_scene;
+export default TitleScene;

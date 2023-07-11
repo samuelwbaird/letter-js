@@ -7,195 +7,195 @@ import * as display from  './display.js';
 
 // TODO: migrate all touch area events here too and make sure they are exported correctly
 
-export const config_button_touch_outer_padding = 'config_button_touch_outer_padding';
-export const event_button_down = 'event_button_down';
-export const event_button_up = 'event_button_up';
+export const configButtonTouchOuterPadding = 'config_button_touch_outer_padding';
+export const eventButtonDown = 'event_button_down';
+export const eventButtonUP = 'event_button_up';
 
-const dispatch_delayed_button = 'dispatch_delayed_button';
+const dispatchDelayedButton = 'dispatch_delayed_button';
 
-class touch_area {
+class TouchArea {
 
-	constructor (point_conversion, area_test, context) {
-		this.point_conversion = point_conversion;
-		this.area_test = area_test;
+	constructor (pointConversion, areaTest, context) {
+		this.pointConversion = pointConversion;
+		this.areaTest = areaTest;
 		this.context = context;
-		this.event_handler = new dispatch.event_handler(context.event_dispatch);
+		this.eventHandler = new dispatch.EventHandler(context.eventDispatch);
 		this.enabled = true;
 
 		// initialise values
-		this.cancel_touch();
+		this.cancelTouch();
 
 		// clients should supply these
-		this.on_touch_begin = null;
-		this.on_touch_move = null;
-		this.on_touch_end = null;
-		this.on_touch_cancel = null;
+		this.onTouchBegin = null;
+		this.onTouchMove = null;
+		this.onTouchEnd = null;
+		this.onTouchCancel = null;
 	}
 
-	cancel_touch () {
-		if (this.is_touched) {
-			this.is_touched = false;
-			if (this.on_touch_cancel) {
-				this.on_touch_cancel(this);
+	cancelTouch () {
+		if (this.isTouched) {
+			this.isTouched = false;
+			if (this.onTouchCancel) {
+				this.onTouchCancel(this);
 			}
 		}
 
-		this.is_touched = false;
-		this.is_touch_over = false;
-		this.touch_id = null;
+		this.isTouched = false;
+		this.isTouchOver = false;
+		this.touchID = null;
 
-		this.touch_time = null;
-		this.touch_position = null;
+		this.touchTime = null;
+		this.touchPosition = null;
 
-		this.touch_start_time = null;
-		this.touch_start_position = null;
+		this.touchStartTime = null;
+		this.touchStartPosition = null;
 
-		this.drag_distance = null;
-		this.move_distance = null;
+		this.dragDistance = null;
+		this.moveDistance = null;
 	}
 
 	get enabled () {
-		return this.event_handler.did_listen;
+		return this.eventHandler.didListen;
 	}
 
 	set enabled (value) {
-		if (value && !this.event_handler.did_listen) {
-			this.event_handler.listen('touch_begin', (touch_data) => {
-				this.handle_touch_begin(touch_data);
+		if (value && !this.eventHandler.didListen) {
+			this.eventHandler.listen('touch_begin', (touchData) => {
+				this.handleTouchBegin(touchData);
 			});
-			this.event_handler.listen('touch_move', (touch_data) => {
-				this.handle_touch_move(touch_data);
+			this.eventHandler.listen('touch_move', (touchData) => {
+				this.handleTouchMove(touchData);
 			});
-			this.event_handler.listen('touch_end', (touch_data) => {
-				this.handle_touch_end(touch_data);
+			this.eventHandler.listen('touch_end', (touchData) => {
+				this.handleTouchEnd(touchData);
 			});
-			this.event_handler.listen('touch_cancel', (touch_data) => {
-				this.handle_touch_cancel(touch_data);
+			this.eventHandler.listen('touch_cancel', (touchData) => {
+				this.handleTouchCancel(touchData);
 			});
-			this.event_handler.listen(dispatch.event_interrupt_context, () => {
-				this.cancel_touch();
+			this.eventHandler.listen(dispatch.eventInterruptContext, () => {
+				this.cancelTouch();
 			});
-		} else if (!value && this.event_handler.did_listen) {
-			this.event_handler.unlisten();
-			this.cancel_touch();
+		} else if (!value && this.eventHandler.didListen) {
+			this.eventHandler.unlisten();
+			this.cancelTouch();
 		}
 	}
 
-	handle_touch_begin (touch_data) {
-		if (this.touch_id) {
+	handleTouchBegin (touchData) {
+		if (this.touchID) {
 			return;
 		}			// already tracking a touch
-		if (!this.point_conversion) {
+		if (!this.pointConversion) {
 			return;
 		}	// no longer valid
 
-		const point = this.point_conversion(touch_data);
-		const is_touch_over = this.area_test(point);
+		const point = this.pointConversion(touchData);
+		const isTouchOver = this.areaTest(point);
 
-		if (!is_touch_over) {
+		if (!isTouchOver) {
 			return;
 		}
 
 		// -- TODO: check for filtering and intercepts here
-		this.is_touched = true;
-		this.is_touch_over = true;
-		this.touch_id = touch_data.id;
+		this.isTouched = true;
+		this.isTouchOver = true;
+		this.touchID = touchData.id;
 
-		this.touch_position = point;
-		this.touch_time = touch_data.time;
+		this.touchPosition = point;
+		this.touchTime = touchData.time;
 
-		this.touch_start_position = { x : point.x, y : point.y };
-		this.touch_start_time = this.touch_time;
+		this.touchStartPosition = { x : point.x, y : point.y };
+		this.touchStartTime = this.touchTime;
 
-		this.drag_distance = null;
-		this.move_distance = null;
+		this.dragDistance = null;
+		this.moveDistance = null;
 
-		if (this.on_touch_begin) {
-			this.on_touch_begin(this);
+		if (this.onTouchBegin) {
+			this.onTouchBegin(this);
 		}
 	}
 
-	handle_touch_move (touch_data) {
-		if (this.touch_id != touch_data.id) {
+	handleTouchMove (touchData) {
+		if (this.touchID != touchData.id) {
 			return;
 		}
 
-		this.update_values(this.point_conversion(touch_data), touch_data.time);
-		if (this.on_touch_move) {
-			this.on_touch_move(this);
+		this.updateValues(this.pointConversion(touchData), touchData.time);
+		if (this.onTouchMove) {
+			this.onTouchMove(this);
 		}
 	}
 
-	handle_touch_end (touch_data) {
-		if (this.touch_id != touch_data.id) {
+	handleTouchEnd (touchData) {
+		if (this.touchID != touchData.id) {
 			return;
 		}
 
-		this.update_values(this.point_conversion(touch_data), touch_data.time);
-		this.is_touched = false;
-		if (this.on_touch_end) {
-			this.on_touch_end(this);
+		this.updateValues(this.pointConversion(touchData), touchData.time);
+		this.isTouched = false;
+		if (this.onTouchEnd) {
+			this.onTouchEnd(this);
 		}
-		this.cancel_touch();
+		this.cancelTouch();
 	}
 
-	handle_touch_cancel (touch_data) {
-		if (this.touch_id != touch_data.id) {
+	handleTouchCancel (touchData) {
+		if (this.touchID != touchData.id) {
 			return;
 		}
-		this.cancel_touch();
+		this.cancelTouch();
 	}
 
-	update_values (point, time) {
-		const previous_position = this.touch_position;
-		this.is_touch_over = this.area_test(point);
-		this.touch_position = point;
-		this.touch_time = time;
+	updateValues (point, time) {
+		const previousPosition = this.touchPosition;
+		this.isTouchOver = this.areaTest(point);
+		this.touchPosition = point;
+		this.touchTime = time;
 
-		this.drag_distance = { x : point.x - this.touch_start_position.x, y : point.y - this.touch_start_position.y };
-		this.move_distance = { x : point.x - previous_position.x, y : point.y - previous_position.y };
+		this.dragDistance = { x : point.x - this.touchStartPosition.x, y : point.y - this.touchStartPosition.y };
+		this.moveDistance = { x : point.x - previousPosition.x, y : point.y - previousPosition.y };
 	}
 
 	dispose () {
-		if (this.event_handler) {
-			this.event_handler.dispose();
-			this.event_handler = null;
+		if (this.eventHandler) {
+			this.eventHandler.dispose();
+			this.eventHandler = null;
 		}
-		this.on_touch_begin = null;
-		this.on_touch_move = null;
-		this.on_touch_end = null;
+		this.onTouchBegin = null;
+		this.onTouchMove = null;
+		this.onTouchEnd = null;
 	}
 
 
 	// add static constructors
-	static bounds (display_object, padding, context) {
+	static bounds (displayObject, padding, context) {
 		if (padding == undefined) {
 			padding = 0;
 		}
-		return new touch_area(
+		return new TouchArea(
 			// point conversion
 			((point) => {
-				return display_object.world_to_local(point);
+				return displayObject.worldToLocal(point);
 			}),
 			// area test
 			((point) => {
-				let rect = display_object.bounds();
-				rect = geometry.expanded_rect(rect, padding, padding);
-				return rect.contains_point(point);
+				let rect = displayObject.bounds();
+				rect = geometry.expandedRect(rect, padding, padding);
+				return rect.containsPoint(point);
 			}),
 			context
 		);
 	}
 
-	static rect (display_object, rect, context) {
-		return new touch_area(
+	static rect (displayObject, rect, context) {
+		return new TouchArea(
 			// point conversion
 			((point) => {
-				return display_object.world_to_local(point);
+				return displayObject.worldToLocal(point);
 			}),
 			// area test
 			((point) => {
-				return rect.contains_point(point);
+				return rect.containsPoint(point);
 			}),
 			context
 		);
@@ -206,245 +206,245 @@ class touch_area {
 // adds two frame button behaviour to an animated display object
 // copyright 2020 Samuel Baird MIT Licence
 
-class button {
+class Button {
 
-	constructor (clip, action, init_values, context) {
+	constructor (clip, action, initValues, context) {
 		// base properties for a button
 		this.clip = clip;
 		this.action = action;
 		this.context = context;
-		this.event_handler = new dispatch.event_handler(context.event_dispatch);
+		this.eventHandler = new dispatch.EventHandler(context.eventDispatch);
 
 		// override these properties if required
 		if (clip.goto != null) {
 			// if the clip appears to be an animated clip then default to using these frames as the button states
-			this.up_frame = 1;
-			this.down_frame = 2;
+			this.upFrame = 1;
+			this.downFrame = 2;
 		}
 
-		if (init_values) {
-			for (const k in init_values) {
-				this[k] = init_values[k];
+		if (initValues) {
+			for (const k in initValues) {
+				this[k] = initValues[k];
 			}
 		}
 
 		// internal
-		this.is_down = false;
-		this.is_releasing = false;
+		this.isDown = false;
+		this.isReleasing = false;
 
-		const button_touch_out_padding = context.get('config_button_touch_outer_padding', 20);
+		const buttonTouchOutPadding = context.get('config_button_touch_outer_padding', 20);
 
-		this.touch_area_inner = touch_area.bounds(clip, 0, context);
-		this.touch_area_outer = touch_area.bounds(clip, button_touch_out_padding, context);
+		this.touchAreaInner = TouchArea.bounds(clip, 0, context);
+		this.touchAreaOuter = TouchArea.bounds(clip, buttonTouchOutPadding, context);
 
-		this.touch_area_inner.on_touch_begin = () => {
+		this.touchAreaInner.onTouchBegin = () => {
 			this.update();
 		};
-		this.touch_area_inner.on_touch_move = () => {
+		this.touchAreaInner.onTouchMove = () => {
 			this.update();
 		};
-		this.touch_area_outer.on_touch_begin = () => {
+		this.touchAreaOuter.onTouchBegin = () => {
 			this.update();
 		};
-		this.touch_area_outer.on_touch_move = () => {
+		this.touchAreaOuter.onTouchMove = () => {
 			this.update();
 		};
-		this.touch_area_outer.on_touch_end = () => {
-			this.handle_button_release();
+		this.touchAreaOuter.onTouchEnd = () => {
+			this.handleButtonRelease();
 		};
-		this.touch_area_outer.on_touch_cancel = () => {
-			this.cancel_touch();
+		this.touchAreaOuter.onTouchCancel = () => {
+			this.cancelTouch();
 		};
-		this.event_handler.listen(dispatch.event_interrupt_context, () => {
-			this.context.frame_dispatch.remove(dispatch_delayed_button);
+		this.eventHandler.listen(dispatch.eventInterruptContext, () => {
+			this.context.frameDispatch.remove(dispatchDelayedButton);
 		});
 	}
 
 	get enabled () {
-		return this.touch_area_inner.enabled && this.touch_area_outer.enabled;
+		return this.touchAreaInner.enabled && this.touchAreaOuter.enabled;
 	}
 
 	set enabled (value) {
-		if (this.touch_area_inner) {
-			this.touch_area_inner.enabled = value;
-			this.touch_area_outer.enabled = value;
+		if (this.touchAreaInner) {
+			this.touchAreaInner.enabled = value;
+			this.touchAreaOuter.enabled = value;
 		}
 		this.update();
 	}
 
-	is_visible () {
-		return this.clip.is_visible();
+	isVisible () {
+		return this.clip.isVisible();
 	}
 
 	update () {
-		if (this.enabled && this.is_visible() && this.touch_area_inner.is_touched && this.touch_area_outer.is_touch_over && !this.is_releasing) {
-			if (!this.is_down) {
-				this.is_down = true;
-				if (typeof this.down_frame == 'function') {
-					this.down_frame(this);
+		if (this.enabled && this.isVisible() && this.touchAreaInner.isTouched && this.touchAreaOuter.isTouchOver && !this.isReleasing) {
+			if (!this.isDown) {
+				this.isDown = true;
+				if (typeof this.downFrame == 'function') {
+					this.downFrame(this);
 				} else if (this.clip.goto != null) {
-					this.clip.goto(this.down_frame);
+					this.clip.goto(this.downFrame);
 				}
 
 				// dispatch an event for global button down
-				this.context.event_dispatch.defer(event_button_down, { button: this });
+				this.context.eventDispatch.defer(eventButtonDown, { button: this });
 			}
 		} else {
-			if (this.is_down) {
-				this.is_down = false;
-				if (typeof this.up_frame == 'function') {
-					this.up_frame(this);
+			if (this.isDown) {
+				this.isDown = false;
+				if (typeof this.upFrame == 'function') {
+					this.upFrame(this);
 				} else if (this.clip.goto != null) {
-					this.clip.goto(this.up_frame);
+					this.clip.goto(this.upFrame);
 				}
 
 				// dispatch an event for global button up
-				this.context.event_dispatch.defer(event_button_up, { button: this });
+				this.context.eventDispatch.defer(eventButtonUP, { button: this });
 			}
 		}
 	}
 
-	handle_button_release () {
-		if (this.is_releasing) {
+	handleButtonRelease () {
+		if (this.isReleasing) {
 			return;
 		}
 
-		if (this.is_down) {
-			this.is_releasing = true;
+		if (this.isDown) {
+			this.isReleasing = true;
 			this.update();
 
-			this.context.frame_dispatch.delay(1, () => {
+			this.context.frameDispatch.delay(1, () => {
 				this.action(this);
-				this.is_releasing = false;
-			}, dispatch_delayed_button);
+				this.isReleasing = false;
+			}, dispatchDelayedButton);
 		}
 	}
 
-	cancel_touch () {
-		if (this.is_releasing) {
+	cancelTouch () {
+		if (this.isReleasing) {
 			return;
 		}
 
-		if (this.touch_area_inner) {
-			this.touch_area_inner.cancel_touch();
+		if (this.touchAreaInner) {
+			this.touchAreaInner.cancelTouch();
 		}
-		if (this.touch_area_outer) {
-			this.touch_area_outer.cancel_touch();
+		if (this.touchAreaOuter) {
+			this.touchAreaOuter.cancelTouch();
 		}
 		this.update();
 	}
 
 	dispose () {
-		if (this.touch_area_inner) {
-			this.touch_area_inner.dispose();
-			this.touch_area_inner = null;
+		if (this.touchAreaInner) {
+			this.touchAreaInner.dispose();
+			this.touchAreaInner = null;
 		}
-		if (this.touch_area_outer) {
-			this.touch_area_outer.dispose();
-			this.touch_area_outer = null;
+		if (this.touchAreaOuter) {
+			this.touchAreaOuter.dispose();
+			this.touchAreaOuter = null;
 		}
 		this.clip = null;
 		this.action = null;
 	}
 }
 
-class scroll_behaviour {
+class ScrollBehaviour {
 
-	constructor (touch_area, view_width, view_height, scroll_parent) {
-		this.touch_area = touch_area;
-		this.view_width = view_width;
-		this.view_height = view_height;
-		this.scroll_parent = scroll_parent;
+	constructor (touchArea, viewWidth, viewHeight, scrollParent) {
+		this.touchArea = touchArea;
+		this.viewWidth = viewWidth;
+		this.viewHeight = viewHeight;
+		this.scrollParent = scrollParent;
 
-		this.content_x = 0;
-		this.content_y = 0;
-		this.momentum_x = 0;
-		this.momentum_y = 0;
+		this.contentX = 0;
+		this.contentY = 0;
+		this.momentumX = 0;
+		this.momentumY = 0;
 
 		this.damping = 0.95;
 		this.stretch = 0.1;
 		this.snap = 0.5;
 
-		this.set_content_size(view_width, view_height);
+		this.setContentSize(viewWidth, viewHeight);
 
-		this.touch_area.on_touch_move = (ta) => {
-			if (ta.is_touched) {
-				if (this.scroll_x) {
-					const max_x = (this.content_width - this.view_width);
-					if (this.content_x < 0 && ta.move_distance.x > 0) {
-						this.content_x -= ta.move_distance.x * this.stretch;
-					} else if (this.content_x > max_x && ta.move_distance.x < 0) {
-						this.content_x -= ta.move_distance.x * this.stretch;
+		this.touchArea.onTouchMove = (ta) => {
+			if (ta.isTouched) {
+				if (this.scrollX) {
+					const maxX = (this.contentWidth - this.viewWidth);
+					if (this.contentX < 0 && ta.moveDistance.x > 0) {
+						this.contentX -= ta.moveDistance.x * this.stretch;
+					} else if (this.contentX > maxX && ta.moveDistance.x < 0) {
+						this.contentX -= ta.moveDistance.x * this.stretch;
 					} else {
-						this.content_x -= ta.move_distance.x;
+						this.contentX -= ta.moveDistance.x;
 					}
 
-					this.momentum_x = -ta.move_distance.x;
+					this.momentumX = -ta.moveDistance.x;
 				}
-				if (this.scroll_y) {
-					const max_y = (this.content_height - this.view_height);
-					if (this.content_y < 0 && ta.move_distance.y > 0) {
-						this.content_y -= ta.move_distance.y * this.stretch;
-					} else if (this.content_y > max_y && ta.move_distance.y < 0) {
-						this.content_y -= ta.move_distance.y * this.stretch;
+				if (this.scrollY) {
+					const maxY = (this.contentHeight - this.viewHeight);
+					if (this.contentY < 0 && ta.moveDistance.y > 0) {
+						this.contentY -= ta.moveDistance.y * this.stretch;
+					} else if (this.contentY > maxY && ta.moveDistance.y < 0) {
+						this.contentY -= ta.moveDistance.y * this.stretch;
 					} else {
-						this.content_y -= ta.move_distance.y;
+						this.contentY -= ta.moveDistance.y;
 					}
 
-					this.momentum_y = -ta.move_distance.y;
+					this.momentumY = -ta.moveDistance.y;
 				}
 			}
 		};
 
 	}
 
-	set_content_size (width, height) {
-		this.content_width = width;
-		this.content_height = height;
-		this.scroll_x = (this.content_width > this.view_width);
-		this.scroll_y = (this.content_height > this.view_height);
+	setContentSize (width, height) {
+		this.contentWidth = width;
+		this.contentHeight = height;
+		this.scrollX = (this.contentWidth > this.viewWidth);
+		this.scrollY = (this.contentHeight > this.viewHeight);
 	}
 
-	set_position (x, y) {
-		this.content_x = x;
-		this.content_y = y;
-		this.momentum_x = 0;
-		this.momentum_y = 0;
-		this.touch_area.cancel_touch();
+	setPosition (x, y) {
+		this.contentX = x;
+		this.contentY = y;
+		this.momentumX = 0;
+		this.momentumY = 0;
+		this.touchArea.cancelTouch();
 	}
 
 	update () {
 		// bounce back in when not touched
-		if (!this.touch_area.is_touched) {
-			if (this.scroll_x) {
-				this.content_x += this.momentum_x;
+		if (!this.touchArea.isTouched) {
+			if (this.scrollX) {
+				this.contentX += this.momentumX;
 
-				const max_x = (this.content_width - this.view_width);
-				if (this.content_x < 0) {
-					this.content_x *= this.snap;
-				} else if (this.content_x > max_x) {
-					this.content_x = max_x + (this.content_x - max_x) * this.snap;
+				const maxX = (this.contentWidth - this.viewWidth);
+				if (this.contentX < 0) {
+					this.contentX *= this.snap;
+				} else if (this.contentX > maxX) {
+					this.contentX = maxX + (this.contentX - maxX) * this.snap;
 				}
 			}
-			if (this.scroll_y) {
-				this.content_y += this.momentum_y;
+			if (this.scrollY) {
+				this.contentY += this.momentumY;
 
-				const max_y = (this.content_height - this.view_height);
-				if (this.content_y < 0) {
-					this.content_y *= this.snap;
-				} else if (this.content_y > max_y) {
-					this.content_y = max_y + (this.content_y - max_y) * this.snap;
+				const maxY = (this.contentHeight - this.viewHeight);
+				if (this.contentY < 0) {
+					this.contentY *= this.snap;
+				} else if (this.contentY > maxY) {
+					this.contentY = maxY + (this.contentY - maxY) * this.snap;
 				}
 			}
 		}
 
-		this.momentum_x *= this.damping;
-		this.momentum_y *= this.damping;
+		this.momentumX *= this.damping;
+		this.momentumY *= this.damping;
 
 		// update scroll parent if we have it
-		if (this.scroll_parent != null) {
-			this.scroll_parent.x = -this.content_x;
-			this.scroll_parent.y = -this.content_y;
+		if (this.scrollParent != null) {
+			this.scrollParent.x = -this.contentX;
+			this.scrollParent.y = -this.contentY;
 		}
 	}
 
@@ -453,52 +453,52 @@ class scroll_behaviour {
 	}
 }
 
-class canvas_screen  {
-	constructor (canvas, ideal_width, ideal_height, fit) {
+class CanvasScreen  {
+	constructor (canvas, idealWidth, idealHeight, fit) {
 		this.canvas = canvas;
 		this.ctx = canvas.getContext('2d');
-		this.ideal_height = ideal_height;
-		this.ideal_width = ideal_width;
+		this.idealHeight = idealHeight;
+		this.idealWidth = idealWidth;
 		this.fit = fit;
-		this.root_view = new display.display_list();
+		this.rootView = new display.DisplayList();
 
 		this.update();
 
 		canvas.addEventListener('mousedown', (evt) => {
-			this.touch_event('touch_begin', evt);
+			this.touchEvent('touch_begin', evt);
 		}, false);
 		canvas.addEventListener('mousemove', (evt) => {
-			this.touch_event('touch_move', evt);
+			this.touchEvent('touch_move', evt);
 		}, false);
 		window.addEventListener('mouseup', (evt) => {
-			this.touch_event('touch_end', evt);
+			this.touchEvent('touch_end', evt);
 		}, false);
 		canvas.addEventListener('contextmenu', (evt) => {
 			evt.preventDefault();
 		}, false);
 
 		canvas.addEventListener('touchstart', (evt) => {
-			this.touch_event('touch_begin', evt);
+			this.touchEvent('touch_begin', evt);
 		}, false);
 		canvas.addEventListener('touchmove', (evt) => {
-			this.touch_event('touch_move', evt);
+			this.touchEvent('touch_move', evt);
 		}, false);
 		canvas.addEventListener('touchend', (evt) => {
-			this.touch_event('touch_end', evt);
+			this.touchEvent('touch_end', evt);
 		}, false);
 		canvas.addEventListener('touchcancel', (evt) => {
-			this.touch_event('touch_cancel', evt);
+			this.touchEvent('touch_cancel', evt);
 		}, false);
 	}
 
-	set_context (context) {
+	setContext (context) {
 		this.context = context;
 		this.context.set('screen', this);
 		this.context.set('canvas', this.canvas);
 		this.context.set('ctx', this.ctx);
 	}
 
-	touch_event (event_name, evt) {
+	touchEvent (eventName, evt) {
 		evt.preventDefault();
 
 		if (this.context == null) {
@@ -506,18 +506,18 @@ class canvas_screen  {
 		}
 
 		// where will events be dispatched, can be overridden by the context
-		const event_dispatch = this.context.get_active().event_dispatch;
+		const eventDispatch = this.context.getActive().eventDispatch;
 
 		// correct co-ords for hdpi displays
-		const scale_x = this.canvas.width / this.canvas.clientWidth;
-		const scale_y = this.canvas.height / this.canvas.clientHeight;
+		const scaleX = this.canvas.width / this.canvas.clientWidth;
+		const scaleY = this.canvas.height / this.canvas.clientHeight;
 
 		if (evt.changedTouches) {
 			for (const touch of evt.changedTouches) {
-				event_dispatch.defer(event_name, { id : touch.identifier, time : Date.now(), x : (touch.pageX - this.canvas.offsetLeft) * scale_x, y : (touch.pageY - this.canvas.offsetTop) * scale_y });
+				eventDispatch.defer(eventName, { id : touch.identifier, time : Date.now(), x : (touch.pageX - this.canvas.offsetLeft) * scaleX, y : (touch.pageY - this.canvas.offsetTop) * scaleY });
 			}
 		} else {
-			event_dispatch.defer(event_name, { id : 1, time : Date.now(), x : (evt.pageX - this.canvas.offsetLeft) * scale_x, y : (evt.pageY - this.canvas.offsetTop) * scale_y });
+			eventDispatch.defer(eventName, { id : 1, time : Date.now(), x : (evt.pageX - this.canvas.offsetLeft) * scaleX, y : (evt.pageY - this.canvas.offsetTop) * scaleY });
 		}
 	}
 
@@ -525,31 +525,31 @@ class canvas_screen  {
 		// update transform of root view to match sizing
 
 		// update scaling to fit nominal sizing to canvas size
-		const scale_x = this.canvas.width / this.ideal_width;
-		const scale_y = this.canvas.height / this.ideal_height;
+		const scaleX = this.canvas.width / this.idealWidth;
+		const scaleY = this.canvas.height / this.idealHeight;
 		let scale = 1;
 
 		if (this.fit == 'fit') {
-			scale = (scale_x < scale_y) ? scale_x : scale_y;
+			scale = (scaleX < scaleY) ? scaleX : scaleY;
 		} else {
 			// other screenfit strategies
 		}
 
-		this.content_scale = scale;
+		this.contentScale = scale;
 		this.width = Math.floor(this.canvas.width / scale);
 		this.height = Math.floor(this.canvas.height / scale);
 
-		this.root_view.scale_x = scale;
-		this.root_view.scale_y = scale;
+		this.rootView.scaleX = scale;
+		this.rootView.scaleY = scale;
 	}
 
 	render () {
 		this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-		this.root_view.render(this.ctx, geometry.transform.identity());
+		this.rootView.render(this.ctx, geometry.Transform.identity());
 	}
 }
 
-class render_callback {
+class RenderCallback {
 	constructor () {
 		this.active = false;
 	}
@@ -558,16 +558,16 @@ class render_callback {
 		this.callback = callback;
 		this.active = true;
 		window.requestAnimationFrame(() => {
-			this.next_frame();
+			this.nextFrame();
 		});
 	}
 
-	next_frame () {
+	nextFrame () {
 		if (!this.active) {
 			return;
 		}
 		window.requestAnimationFrame(() => {
-			this.next_frame();
+			this.nextFrame();
 		});
 		this.callback();
 	}
@@ -578,47 +578,47 @@ class render_callback {
 	}
 }
 
-class fixed_rate_timer {
-	constructor (fps, min_frames, max_frames, reset_frames) {
-		this.set_fps(fps, min_frames, max_frames, reset_frames);
+class FixedRateTimer {
+	constructor (fps, minFrames, maxFrames, resetFrames) {
+		this.setFps(fps, minFrames, maxFrames, resetFrames);
 	}
 
-	set_fps (fps, min_frames = 1, max_frames = 4, reset_frames = 16) {
+	setFps (fps, minFrames = 1, maxFrames = 4, resetFrames = 16) {
 		this.fps = fps;
 		this.delta = 1 / fps;
-		this.min_frames = min_frames;
-		this.max_frames = max_frames;
-		this.reset_frames = reset_frames;
+		this.minFrames = minFrames;
+		this.maxFrames = maxFrames;
+		this.resetFrames = resetFrames;
 		this.reset();
 	}
 
 	reset () {
-		this.last_time = Date.now();
-		this.time_accumulated = 0;
+		this.lastTime = Date.now();
+		this.timeAccumulated = 0;
 	}
 
-	get_frames_due () {
+	getFramesDue () {
 		const now = Date.now();
-		const delta = (now - this.last_time) / 1000.0;
-		this.time_accumulated += delta;
-		this.last_time = now;
+		const delta = (now - this.lastTime) / 1000.0;
+		this.timeAccumulated += delta;
+		this.lastTime = now;
 
-		let frames_due = Math.floor(this.time_accumulated * this.fps);
+		let framesDue = Math.floor(this.timeAccumulated * this.fps);
 
-		if (this.reset_frames > 0 && frames_due > this.reset_frames) {
-			this.time_accumulated = 0;
-			frames_due = 1;
-		} else if (this.max_frames > 0 && frames_due > this.max_frames) {
-			this.time_accumulated = 0;
-			frames_due = this.max_frames;
-		} else if (this.min_frames > 0 && frames_due < this.min_frames) {
-			frames_due = 0;
+		if (this.resetFrames > 0 && framesDue > this.resetFrames) {
+			this.timeAccumulated = 0;
+			framesDue = 1;
+		} else if (this.maxFrames > 0 && framesDue > this.maxFrames) {
+			this.timeAccumulated = 0;
+			framesDue = this.maxFrames;
+		} else if (this.minFrames > 0 && framesDue < this.minFrames) {
+			framesDue = 0;
 		} else {
-			this.time_accumulated -= frames_due / this.fps;
+			this.timeAccumulated -= framesDue / this.fps;
 		}
 
-		return frames_due;
+		return framesDue;
 	}
 }
 
-export { touch_area, button, scroll_behaviour, canvas_screen, render_callback, fixed_rate_timer };
+export { TouchArea, Button, ScrollBehaviour, CanvasScreen, RenderCallback, FixedRateTimer };

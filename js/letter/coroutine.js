@@ -3,12 +3,12 @@
 
 import * as dispatch from './dispatch.js';
 
-const yield_cancel = {};
+const yieldCancel = {};
 
-class coroutine {
-	constructor (generator, apply_this) {
-		if (apply_this) {
-			this.generator = generator.apply(apply_this);
+class Coroutine {
+	constructor (generator, applyThis) {
+		if (applyThis) {
+			this.generator = generator.apply(applyThis);
 		} else {
 			this.generator = generator();
 		}
@@ -33,7 +33,7 @@ class coroutine {
 		if (!this.yield) {
 			const result = this.generator.next();
 			this.yield = result.value;
-			if (result.done || this.yield == yield_cancel) {
+			if (result.done || this.yield == yieldCancel) {
 				this.complete = true;
 				return true;
 			}
@@ -41,33 +41,33 @@ class coroutine {
 	}
 }
 
-class coroutine_manager {
-	constructor (apply_this) {
-		this.apply_this = apply_this;
-		this.update_list = new dispatch.update_list();
+class CoroutineManager {
+	constructor (applyThis) {
+		this.applyThis = applyThis;
+		this.updateList = new dispatch.UpdateList();
 	}
 
-	run (generator, apply_this) {
-		this.update_list.add(new coroutine(generator, (apply_this != null) ? apply_this : this.apply_this));
+	run (generator, applyThis) {
+		this.updateList.add(new Coroutine(generator, (applyThis != null) ? applyThis : this.applyThis));
 	}
 
 	update () {
-		// this.update_list.clone_update((c) => {
-		this.update_list.update((c) => {
+		// this.updateList.cloneUpdate((c) => {
+		this.updateList.update((c) => {
 			return c.update();
 		}, true);
 	}
 
 	clear () {
-		this.update_list.clear();
+		this.updateList.clear();
 	}
 
-	is_clear () {
-		return this.update_list.is_clear();
+	isClear () {
+		return this.updateList.isClear();
 	}
 
-	remove (tag_or_fn) {
-		this.update_list.remove(tag_or_fn);
+	remove (tagOrFn) {
+		this.updateList.remove(tagOrFn);
 	}
 
 	dispose () {
@@ -75,13 +75,13 @@ class coroutine_manager {
 	}
 }
 
-function yield_frame () {
+function yieldFrame () {
 	return function () {
 		return true;
 	};
 }
 
-function yield_frames (frames) {
+function yieldFrames (frames) {
 	let f = frames;
 	return function () {
 		f--;
@@ -89,21 +89,21 @@ function yield_frames (frames) {
 	};
 }
 
-function yield_tween (tween) {
+function yieldTween (tween) {
 	return function () {
 		return tween.frame >= tween.easing.length;
 	};
 }
 
-function yield_condition (condition) {
+function yieldCondition (condition) {
 	return condition;
 }
 
-function yield_coroutine (generator, apply_this) {
-	const co = coroutine(generator, apply_this);
+function yieldCoroutine (generator, applyThis) {
+	const co = coroutine(generator, applyThis);
 	return function () {
 		return co.update();
 	};
 }
 
-export { coroutine_manager, coroutine, yield_cancel, yield_frame, yield_frames, yield_tween, yield_condition, yield_coroutine };
+export { CoroutineManager, Coroutine, yieldCancel, yieldFrame, yieldFrames, yieldTween, yieldCondition, yieldCoroutine };

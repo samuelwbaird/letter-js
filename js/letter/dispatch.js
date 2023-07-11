@@ -4,22 +4,22 @@
 // -- update list --------------------------------------------------------------------
 // collection with tag/callback/expire behaviour
 
-class update_list {
+class UpdateList {
 	constructor () {
 		this.list = [];
 
 		// control updates during iteration
-		this.is_iterating = false;
-		this.iteration_index = 0;
+		this.isIterating = false;
+		this.iterationIndex = 0;
 
 		// these are only create if an interruption to fast path occurs
-		this.slow_path_to_complete = null;
-		this.slow_path_to_ignore = null;
+		this.slowPathToComplete = null;
+		this.slowPathToIgnore = null;
 	}
 
 	add (obj, tag) {
 		// capture the slow path here before objects are added this update cycle
-		this.enable_slow_path_iteration_if_required();
+		this.enableSlowPathIterationIfRequired();
 
 		this.list.push({
 			obj: obj,
@@ -27,34 +27,34 @@ class update_list {
 		});
 	}
 
-	remove (obj_or_tag) {
+	remove (objOrTag) {
 		// cancel the fast path if we're in an iteration
-		this.enable_slow_path_iteration_if_required();
+		this.enableSlowPathIterationIfRequired();
 
-		let did_remove = false;
+		let didRemove = false;
 		let i = 0;
 		while (i < this.list.length) {
 			const entry = this.list[i];
-			if (entry.obj == obj_or_tag || entry.tag == obj_or_tag) {
+			if (entry.obj == objOrTag || entry.tag == objOrTag) {
 				this.list.splice(i, 1);
-				did_remove = true;
+				didRemove = true;
 			} else {
 				i++;
 			}
 		}
 
-		return did_remove;
+		return didRemove;
 	}
 
 	clear () {
 		// cancel the fast path if we're in an iteration
-		this.enable_slow_path_iteration_if_required();
+		this.enableSlowPathIterationIfRequired();
 
 		// clear our actual list
 		this.list = [];
 	}
 
-	is_clear () {
+	isClear () {
 		return this.list.length == 0;
 	}
 
@@ -66,31 +66,31 @@ class update_list {
 		return this.list[this.list.length - 1].obj;
 	}
 
-	update (update_function, remove_on_return_true) {
+	update (updateFunction, removeONReturnTrue) {
 		// if we're already in an iteration, don't allow it to recurse
-		if (this.is_iterating) {
+		if (this.isIterating) {
 			return;
 		}
 
 		// markers to begin the iteration in fast path
-		this.is_iterating = true;
+		this.isIterating = true;
 
 		// begin on a fast path, iterating by index and removing complete updates as required
 		// avoid creation of temporary objects unless update during iteration requires it
 		let i = 0;
 		let length = this.list.length;
-		while (i < length && this.slow_path_to_complete == null) {
+		while (i < length && this.slowPathToComplete == null) {
 			// save this marker in case we drop off the fast path
-			this.iteration_index = i;
+			this.iterationIndex = i;
 
 			// check this entry, update and remove if required
 			const entry = this.list[i];
-			if (update_function(entry.obj) === true && remove_on_return_true) {
+			if (updateFunction(entry.obj) === true && removeONReturnTrue) {
 				// if we've jumped onto the slow path during the update then be careful here
-				if (this.slow_path_to_complete != null) {
-					const post_update_index = this.list.indexOf(entry);
-					if (post_update_index >= 0) {
-						this.list.splice(post_update_index, 1);
+				if (this.slowPathToComplete != null) {
+					const postUpdateIndex = this.list.indexOf(entry);
+					if (postUpdateIndex >= 0) {
+						this.list.splice(postUpdateIndex, 1);
 					}
 				} else {
 					this.list.splice(i, 1);
@@ -102,17 +102,17 @@ class update_list {
 		}
 
 		// if we've dropped off the fast path then complete the iteration on the slow path
-		if (this.slow_path_to_complete != null) {
+		if (this.slowPathToComplete != null) {
 			// complete all that haven't been removed since we started the slow path
-			for (const entry of this.slow_path_to_complete) {
+			for (const entry of this.slowPathToComplete) {
 				// first check this entry is still in the real list
-				const current_index = this.list.indexOf(entry);
-				if (current_index >= 0) {
-					if (update_function(entry.obj) === true && remove_on_return_true) {
+				const currentIndex = this.list.indexOf(entry);
+				if (currentIndex >= 0) {
+					if (updateFunction(entry.obj) === true && removeONReturnTrue) {
 						// find and remove it from the original list, if its still in after the update function
-						const post_update_index = this.list.indexOf(entry);
-						if (post_update_index >= 0) {
-							this.list.splice(post_update_index, 1);
+						const postUpdateIndex = this.list.indexOf(entry);
+						if (postUpdateIndex >= 0) {
+							this.list.splice(postUpdateIndex, 1);
 						}
 					}
 				}
@@ -120,27 +120,27 @@ class update_list {
 		}
 
 		// clear flags and data that can be accumulated during iteration
-		this.slow_path_to_complete = null;
-		this.is_iterating = false;
+		this.slowPathToComplete = null;
+		this.isIterating = false;
 	}
 
-	enable_slow_path_iteration_if_required () {
+	enableSlowPathIterationIfRequired () {
 		// only do this if we haven't already for this iteration
-		if (!this.is_iterating || this.slow_path_to_complete != null) {
+		if (!this.isIterating || this.slowPathToComplete != null) {
 			return;
 		}
 
 		// capture a copy of everything we need to complete on the remainder of the fast path
-		this.slow_path_to_complete = [];
-		for (let i = this.iteration_index + 1; i < this.list.length; i++) {
-			this.slow_path_to_complete.push(this.list[i]);
+		this.slowPathToComplete = [];
+		for (let i = this.iterationIndex + 1; i < this.list.length; i++) {
+			this.slowPathToComplete.push(this.list[i]);
 		}
 	}
 
-	clone_update (update_function, remove_on_return_true) {
+	cloneUpdate (updateFunction, removeONReturnTrue) {
 		const clone = this.list.concat();
 		for (const entry of clone) {
-			if (update_function(entry.obj) === true && remove_on_return_true) {
+			if (updateFunction(entry.obj) === true && removeONReturnTrue) {
 				const index = this.list.indexOf(entry);
 				if (index > -1) {
 					this.list.splice(index, 1);
@@ -154,14 +154,14 @@ class update_list {
 // attach functions to delay or repeat around a frame timer
 
 // how to handle dispatching each entry
-const frame_dispatch_update_function = function (entry) {
-	if (entry.repeat_fn) {
-		entry.repeat_fn();
+const frameDispatchUpdateFunction = function (entry) {
+	if (entry.repeatFn) {
+		entry.repeatFn();
 	}
 	if (entry.count && entry.count > 0) {
 		if (--entry.count == 0) {
-			if (entry.delay_fn) {
-				entry.delay_fn();
+			if (entry.delayFn) {
+				entry.delayFn();
 			}
 			// finished now
 			return true;
@@ -170,10 +170,10 @@ const frame_dispatch_update_function = function (entry) {
 	return false;
 };
 
-class frame_dispatch {
+class FrameDispatch {
 
 	constructor () {
-		this.update_list = new update_list();
+		this.updateList = new UpdateList();
 	}
 
 	// do this after a delay
@@ -183,10 +183,10 @@ class frame_dispatch {
 			count = 1;
 		}
 
-		this.update_list.add({
+		this.updateList.add({
 			type : 'delay',
 			count : count,
-			delay_fn : fn,
+			delayFn : fn,
 		}, tag);
 	}
 
@@ -197,19 +197,19 @@ class frame_dispatch {
 			return;
 		}
 
-		this.update_list.add({
+		this.updateList.add({
 			type : 'recur',
 			count : count,
-			repeat_fn : fn,
+			repeatFn : fn,
 		}, tag);
 	}
 
 	// call this every time
 	hook (fn, tag) {
-		this.update_list.add({
+		this.updateList.add({
 			type : 'recur',
 			count : -1,		// infinite repeat
-			repeat_fn : fn,
+			repeatFn : fn,
 		}, tag);
 	}
 
@@ -219,20 +219,20 @@ class frame_dispatch {
 	}
 
 	update () {
-		this.update_list.update(frame_dispatch_update_function, true);
+		this.updateList.update(frameDispatchUpdateFunction, true);
 	}
 
-	// proxy through some methods from the update_list
+	// proxy through some methods from the updateList
 	clear () {
-		this.update_list.clear();
+		this.updateList.clear();
 	}
 
-	is_clear () {
-		return this.update_list.is_clear();
+	isClear () {
+		return this.updateList.isClear();
 	}
 
-	remove (tag_or_fn) {
-		this.update_list.remove(tag_or_fn);
+	remove (tagOrFn) {
+		this.updateList.remove(tagOrFn);
 	}
 
 	dispose () {
@@ -240,27 +240,27 @@ class frame_dispatch {
 	}
 }
 
-// an event system in 3 parts, an event server (event_dispatch), an event client (event_handler)
+// an event system in 3 parts, an event server (eventDispatch), an event client (eventHandler)
 // and some methods to share a static reference to a global default event dispatcher
 // used to defer touch events and dispatch them at a predictable moment during the frame cycle
 // copyright 2020 Samuel Baird MIT Licence
 
-class event_dispatch {
+class EventDispatch {
 
 	constructor () {
 		this.events = new Map();
 		this.deferred = [];
 	}
 
-	add_listener (tag, event_name, action) {
-		if (event_name == undefined) {
+	addListener (tag, eventName, action) {
+		if (eventName == undefined) {
 			throw 'cannot add listener with undefined event name';
 		}
 
-		let listeners = this.events.get(event_name);
+		let listeners = this.events.get(eventName);
 		if (listeners == undefined) {
 			listeners = [];
-			this.events.set(event_name, listeners);
+			this.events.set(eventName, listeners);
 		}
 		listeners.push({
 			tag : tag,
@@ -268,15 +268,15 @@ class event_dispatch {
 		});
 	}
 
-	remove_listener (tag, event_name) {
-		if (event_name == undefined) {
+	removeListener (tag, eventName) {
+		if (eventName == undefined) {
 			for (const [name] of this.events) {
-				this.remove_listener(tag, name);
+				this.removeListener(tag, name);
 			}
 			return;
 		}
 
-		const listeners = this.events.get(event_name);
+		const listeners = this.events.get(eventName);
 		if (listeners && listeners.constructor === Array && listeners.length > 0) {
 			let i = listeners.length;
 			while (--i >= 0) {
@@ -288,12 +288,12 @@ class event_dispatch {
 		}
 	}
 
-	remove_all () {
+	removeAll () {
 		this.events = new Map();
 	}
 
-	dispatch (event_name, data) {
-		const listeners = this.events.get(event_name);
+	dispatch (eventName, data) {
+		const listeners = this.events.get(eventName);
 		if (listeners && listeners.length > 0) {
 			// clone and iterate the cloned array to
 			const clone = listeners.concat();
@@ -306,72 +306,72 @@ class event_dispatch {
 		}
 	}
 
-	defer (event_name, data) {
+	defer (eventName, data) {
 		this.deferred.push({
-			event_name : event_name,
+			eventName : eventName,
 			data : data,
 		});
 	}
 
-	dispatch_deferred () {
+	dispatchDeferred () {
 		const current = this.deferred;
 		this.deferred = [];
 		for (let i = 0; i < current.length; i++) {
 			const def = current[i];
-			this.dispatch(def.event_name, def.data);
+			this.dispatch(def.eventName, def.data);
 		}
 	}
 
-	clear_deferred () {
+	clearDeferred () {
 		this.deferred = [];
 	}
 
 	dispose () {
-		this.clear_deferred();
-		this.remove_all();
+		this.clearDeferred();
+		this.removeAll();
 	}
 
 }
 
-class event_handler {
+class EventHandler {
 
 	constructor (dispatch) {
-		this.event_dispatch = dispatch;
-		this.did_listen = false;
+		this.eventDispatch = dispatch;
+		this.didListen = false;
 	}
 
-	listen (event_name, action) {
-		this.did_listen = true;
-		this.event_dispatch.add_listener(this, event_name, action);
+	listen (eventName, action) {
+		this.didListen = true;
+		this.eventDispatch.addListener(this, eventName, action);
 	}
 
-	unlisten (event_name) {
-		this.event_dispatch.remove_listener(this, event_name);
-		if (event_name == undefined) {
-			this.did_listen = false;
+	unlisten (eventName) {
+		this.eventDispatch.removeListener(this, eventName);
+		if (eventName == undefined) {
+			this.didListen = false;
 		}
 	}
 
-	dispatch (event_name, data) {
-		this.event_dispatch.dispatch(event_name, data);
+	dispatch (eventName, data) {
+		this.eventDispatch.dispatch(eventName, data);
 	}
 
-	defer (event_name, data) {
-		this.event_dispatch.defer(event_name, data);
+	defer (eventName, data) {
+		this.eventDispatch.defer(eventName, data);
 	}
 
 	dispose () {
-		if (this.did_listen) {
+		if (this.didListen) {
 			this.unlisten();
 		}
 	}
 }
 
 // a dispatch.context is a sort of execution context for objects within an app
-// tying ui and delay action elements to a particular spot within the app_node tree
+// tying ui and delay action elements to a particular spot within the appNode tree
 // often the root app
 
-class context {
+class Context {
 
 	constructor (parent) {
 		this.parent = parent;
@@ -379,11 +379,11 @@ class context {
 		this.root = (parent != null) ? parent.root : this;
 
 		// which derivatives of this context are more current than this one
-		this.derivatives = new update_list();
+		this.derivatives = new UpdateList();
 
 		// the dispatch and flags that are set at this level
-		this.frame_dispatch = new frame_dispatch();
-		this.event_dispatch = new event_dispatch();
+		this.frameDispatch = new FrameDispatch();
+		this.eventDispatch = new EventDispatch();
 		this.flags = new Map();
 	}
 
@@ -396,61 +396,61 @@ class context {
 	}
 
 	update () {
-		this.frame_dispatch.update();
-		this.event_dispatch.dispatch_deferred();
+		this.frameDispatch.update();
+		this.eventDispatch.dispatchDeferred();
 	}
 
 	reset () {
-		this.frame_dispatch.clear();
-		this.event_dispatch.clear_deferred();
+		this.frameDispatch.clear();
+		this.eventDispatch.clearDeferred();
 	}
 
 	set (name, value) {
 		this.flags.set(name, value);
 	}
 
-	get (name, default_value = null) {
+	get (name, defaultValue = null) {
 		if (this.flags.has(name)) {
 			return this.flags.get(name);
 		}
 		if (this.parent) {
 			return this.parent.get(name);
 		}
-		return default_value;
+		return defaultValue;
 	}
 
 	derive () {
-		const derived = new context(this);
+		const derived = new Context(this);
 		this.derivatives.add(derived);
 		// this automatically becomes active, cancel interactions in play on all other contexts
 		this.root.interrupt(derived);
 		return derived;
 	}
 
-	get_active () {
+	getActive () {
 		// if no derived have taken over then this context is current
-		if (this.derivatives.is_clear()) {
+		if (this.derivatives.isClear()) {
 			return this;
 		}
 
 		// otherwise defer to the most recent derived
-		return this.derivatives.last().get_active();
+		return this.derivatives.last().getActive();
 	}
 
-	interrupt (besides_this_one) {
-		if (this != besides_this_one) {
-			this.event_dispatch.dispatch(event_interrupt_context, this);
+	interrupt (besidesThisOne) {
+		if (this != besidesThisOne) {
+			this.eventDispatch.dispatch(eventInterruptContext, this);
 		}
 		this.derivatives.update((child) => {
-			child.interrupt(besides_this_one);
+			child.interrupt(besidesThisOne);
 		});
 	}
 
-	on_dispose (tag_or_do_this, do_this) {
-		if (do_this == null) {
-			this.event_dispatch.add_listener(tag_or_do_this, event_dispose_context, tag_or_do_this);
+	onDispose (tagOrDOThis, doThis) {
+		if (doThis == null) {
+			this.eventDispatch.addListener(tagOrDOThis, eventDisposeContext, tagOrDOThis);
 		} else {
-			this.event_dispatch.add_listener(tag_or_do_this, event_dispose_context, do_this);
+			this.eventDispatch.addListener(tagOrDOThis, eventDisposeContext, doThis);
 		}
 	}
 
@@ -465,25 +465,25 @@ class context {
 
 		// then clean up self
 		if (this.parent != null) {
-			this.event_dispatch.dispatch(event_interrupt_context, this);
-			this.event_dispatch.dispatch(event_dispose_context, this);
+			this.eventDispatch.dispatch(eventInterruptContext, this);
+			this.eventDispatch.dispatch(eventDisposeContext, this);
 
 			this.parent.derivatives.remove(this);
 			this.parent = null;
 		}
 
-		if (this.frame_dispatch) {
-			this.frame_dispatch.dispose();
-			this.frame_dispatch = null;
+		if (this.frameDispatch) {
+			this.frameDispatch.dispose();
+			this.frameDispatch = null;
 		}
-		if (this.event_dispatch) {
-			this.event_dispatch.dispose();
-			this.event_dispatch = null;
+		if (this.eventDispatch) {
+			this.eventDispatch.dispose();
+			this.eventDispatch = null;
 		}
 	}
 }
 
-export const event_interrupt_context = 'event_interrupt_context';
-export const event_dispose_context = 'event_dispose_context';
+export const eventInterruptContext = 'event_interrupt_context';
+export const eventDisposeContext = 'event_dispose_context';
 
-export { update_list, frame_dispatch, event_dispatch, event_handler, context };
+export { UpdateList, FrameDispatch, EventDispatch, EventHandler, Context };

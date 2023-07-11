@@ -4,38 +4,38 @@
 import * as geometry from  './geometry.js';
 import * as resource from './resource.js';
 
-let default_freeze_scale = 1;
-function set_default_freeze_scale (scale) {
-	default_freeze_scale = scale;
+let defaultFreezeScale = 1;
+function setDefaultFreezeScale (scale) {
+	defaultFreezeScale = scale;
 }
 
-class display_list extends geometry.transform {
-	constructor (init_values) {
+class DisplayList extends geometry.Transform {
+	constructor (initValues) {
 		super(0, 0, 1, 1, 0, 1);
 		// this.name = null;
 		// this.parent = null;
 		// this.children = null;
-		// this.visibility_test = null;
+		// this.visibilityTest = null;
 
 		this.visible = true;
 
-		if (init_values) {
-			for (const k in init_values) {
-				this[k] = init_values[k];
+		if (initValues) {
+			for (const k in initValues) {
+				this[k] = initValues[k];
 			}
 		}
 	}
 
 	// -- manage children ------------
 
-	get_children () {
+	getChildren () {
 		if (!this.children) {
 			this.children = [];
 		}
 		return this.children;
 	}
 
-	get_child (name) {
+	getChild (name) {
 		if (this.children) {
 			for (const child of this.children) {
 				if (child.name == name) {
@@ -48,38 +48,38 @@ class display_list extends geometry.transform {
 
 	add (display) {
 		if (display.parent) {
-			display.remove_from_parent();
+			display.removeFromParent();
 		}
-		this.get_children().push(display);
+		this.getChildren().push(display);
 		display.parent = this;
 		return display;
 	}
 
-	add_at_index (display, index) {
+	addATIndex (display, index) {
 		if (display.parent) {
-			display.remove_from_parent();
+			display.removeFromParent();
 		}
-		this.get_children().splice(index, 0, display);
+		this.getChildren().splice(index, 0, display);
 		display.parent = this;
 	}
 
-	send_to_front (display) {
+	sendToFront (display) {
 		if (display) {
 			if (display.parent) {
-				display.remove_from_parent();
+				display.removeFromParent();
 			}
-			this.get_children().push(display);
+			this.getChildren().push(display);
 			display.parent = this;
 		} else if (this.parent) {
-			this.parent.send_to_front(this);
+			this.parent.sendToFront(this);
 		}
 	}
 
-	send_to_back (display) {
+	sendToBack (display) {
 		if (display) {
-			this.add_at_index(display, 0);
+			this.addATIndex(display, 0);
 		} else if (this.parent) {
-			this.parent.send_to_back(this);
+			this.parent.sendToBack(this);
 		}
 	}
 
@@ -91,13 +91,13 @@ class display_list extends geometry.transform {
 		}
 	}
 
-	remove_from_parent () {
+	removeFromParent () {
 		if (this.parent) {
 			this.parent.remove(this);
 		}
 	}
 
-	remove_all_children () {
+	removeAllChildren () {
 		if (this.children) {
 			for (const child of this.children) {
 				child.parent = null;
@@ -112,43 +112,43 @@ class display_list extends geometry.transform {
 		return this;	// assume I'm going to regret this at some point...
 	}
 
-	world_transform () {
+	worldTransform () {
 		if (this.parent) {
-			return this.parent.world_transform().multiply(this);
+			return this.parent.worldTransform().multiply(this);
 		} else {
 			return this;
 		}
 	}
 
-	local_to_world (point) {
-		return this.world_transform().transform_point(point);
+	localToWorld (point) {
+		return this.worldTransform().transformPoint(point);
 	}
 
-	world_to_local (point) {
-		return this.world_transform().untransform_point(point);
+	worldToLocal (point) {
+		return this.worldTransform().untransformPoint(point);
 	}
 
 	// -- bounds ----------------------
 
 	bounds (reference) {
 		// starting point
-		let rect = this.frozen_bounds;
+		let rect = this.frozenBounds;
 		if (rect == null) {
-			rect = this.content_bounds();
+			rect = this.contentBounds();
 			// expand to fit children
 			if (this.children) {
 				for (const child of this.children) {
-					const sub_rect = child.bounds();
-					if (sub_rect) {
+					const subRect = child.bounds();
+					if (subRect) {
 						// all points of the bound transformed
 						const points = [
-							child.transform_point(new geometry.point(sub_rect.x, sub_rect.y)),
-							child.transform_point(new geometry.point(sub_rect.x + sub_rect.width, sub_rect.y)),
-							child.transform_point(new geometry.point(sub_rect.x, sub_rect.y + sub_rect.height)),
-							child.transform_point(new geometry.point(sub_rect.x + sub_rect.width, sub_rect.y + sub_rect.height)),
+							child.transformPoint(new geometry.Point(subRect.x, subRect.y)),
+							child.transformPoint(new geometry.Point(subRect.x + subRect.width, subRect.y)),
+							child.transformPoint(new geometry.Point(subRect.x, subRect.y + subRect.height)),
+							child.transformPoint(new geometry.Point(subRect.x + subRect.width, subRect.y + subRect.height)),
 						];
 						for (let j = 0; j < 4; j++) {
-							rect = geometry.combined_rect_and_point(rect, points[j]);
+							rect = geometry.combinedRectAndPoint(rect, points[j]);
 						}
 					}
 				}
@@ -158,34 +158,34 @@ class display_list extends geometry.transform {
 		if (!rect || !reference) {
 			return rect;
 		} else {
-			const world = this.world_transform();
+			const world = this.worldTransform();
 			const points = [
-				world.untransform_point(new geometry.point(rect.x, rect.y)),
-				world.untransform_point(new geometry.point(rect.x + rect.width, rect.y)),
-				world.untransform_point(new geometry.point(rect.x, rect.y + rect.height)),
-				world.untransform_point(new geometry.point(rect.x + rect.width, rect.y + rect.height)),
+				world.untransformPoint(new geometry.Point(rect.x, rect.y)),
+				world.untransformPoint(new geometry.Point(rect.x + rect.width, rect.y)),
+				world.untransformPoint(new geometry.Point(rect.x, rect.y + rect.height)),
+				world.untransformPoint(new geometry.Point(rect.x + rect.width, rect.y + rect.height)),
 			];
-			const ref = reference.world_transform();
+			const ref = reference.worldTransform();
 			for (let j = 0; j < 4; j++) {
-				rect = geometry.combined_rect_and_point(rect, ref.untransform_point(ref, points[j]));
+				rect = geometry.combinedRectAndPoint(rect, ref.untransformPoint(ref, points[j]));
 			}
 			return rect;
 		}
 	}
 
-	content_bounds () {
+	contentBounds () {
 		// get bounds without any reference point
 		// derived classes should implement only this method
 		return null;
 	}
 
-	is_visible () {
+	isVisible () {
 		if (!this.visible || this.alpha < 0.01) {
 			return false;
 		}
 
 		if (this.parent) {
-			return this.parent.is_visible();
+			return this.parent.isVisible();
 		}
 
 		return true;
@@ -193,96 +193,96 @@ class display_list extends geometry.transform {
 
 	// -- cache/freeze as bitmap ------------------------
 
-	// display.freeze_fast freeze to image_data that is rendered using image_data instead of as a canvas
+	// display.freezeFast freeze to imageData that is rendered using imageData instead of as a canvas
 
-	freeze (optional_bounds, scale_factor) {
-		if (optional_bounds == undefined) {
-			optional_bounds = this.bounds();
+	freeze (optionalBounds, scaleFactor) {
+		if (optionalBounds == undefined) {
+			optionalBounds = this.bounds();
 		}
-		if (scale_factor == undefined) {
-			scale_factor = default_freeze_scale;
+		if (scaleFactor == undefined) {
+			scaleFactor = defaultFreezeScale;
 		}
 
-		this.frozen_bounds = optional_bounds;
-		let temporary_ctx = null;
-		const required_width = this.frozen_bounds.width * scale_factor;
-		const required_height = this.frozen_bounds.height * scale_factor;
+		this.frozenBounds = optionalBounds;
+		let temporaryCtx = null;
+		const requiredWidth = this.frozenBounds.width * scaleFactor;
+		const requiredHeight = this.frozenBounds.height * scaleFactor;
 
-		if (this.frozen_image_canvas == null || this.frozen_image_canvas.width != required_width || this.frozen_image_canvas.height != required_height) {
+		if (this.frozenImageCanvas == null || this.frozenImageCanvas.width != requiredWidth || this.frozenImageCanvas.height != requiredHeight) {
 			// new or different size
-			this.frozen_image_canvas = document.createElement('canvas');
-			this.frozen_image_canvas.width = required_width;
-			this.frozen_image_canvas.height = required_height;
-			temporary_ctx = this.frozen_image_canvas.getContext('2d');
+			this.frozenImageCanvas = document.createElement('canvas');
+			this.frozenImageCanvas.width = requiredWidth;
+			this.frozenImageCanvas.height = requiredHeight;
+			temporaryCtx = this.frozenImageCanvas.getContext('2d');
 		} else {
 			// clear and re-use
-			temporary_ctx = this.frozen_image_canvas.getContext('2d');
-			temporary_ctx.clearRect(0, 0, this.frozen_image_canvas.width, this.frozen_image_canvas.height);
+			temporaryCtx = this.frozenImageCanvas.getContext('2d');
+			temporaryCtx.clearRect(0, 0, this.frozenImageCanvas.width, this.frozenImageCanvas.height);
 		}
 
-		const transform = geometry.transform.identity();
+		const transform = geometry.Transform.identity();
 
-		transform.x = -this.frozen_bounds.x * scale_factor;
-		transform.y = -this.frozen_bounds.y * scale_factor;
-		transform.scale_x = transform.scale_y = scale_factor;
-		if (this.content_render) {
-			this.content_render(temporary_ctx, transform);
+		transform.x = -this.frozenBounds.x * scaleFactor;
+		transform.y = -this.frozenBounds.y * scaleFactor;
+		transform.scaleX = transform.scaleY = scaleFactor;
+		if (this.contentRender) {
+			this.contentRender(temporaryCtx, transform);
 		}
 		if (this.children) {
 			for (const child of this.children) {
-				child.render(temporary_ctx, transform);
+				child.render(temporaryCtx, transform);
 			}
 		}
 
-		// this.frozen_image_data = temporary_ctx.getImageData(0, 0, this.frozen_bounds.width, this.frozen_bounds.height);
-		this.is_frozen = true;
+		// this.frozenImageData = temporaryCtx.getImageData(0, 0, this.frozenBounds.width, this.frozenBounds.height);
+		this.isFrozen = true;
 	}
 
 	unfreeze () {
-		this.is_frozen = false;
-		this.frozen_image_canvas = null;
-		this.frozen_bounds = null;
+		this.isFrozen = false;
+		this.frozenImageCanvas = null;
+		this.frozenBounds = null;
 	}
 
 	// -- render -----------------------------------------
 
-	update_animated_clips (delta, add_oncomplete_callback) {
+	updateAnimatedClips (delta, addOncompleteCallback) {
 		if (this.update) {
-			this.update(delta, add_oncomplete_callback);
+			this.update(delta, addOncompleteCallback);
 		}
 		if (this.children) {
 			for (const child of this.children) {
-				child.update_animated_clips(delta, add_oncomplete_callback);
+				child.updateAnimatedClips(delta, addOncompleteCallback);
 			}
 		}
 	}
 
-	render (ctx, with_transform) {
+	render (ctx, withTransform) {
 		if (!this.visible || this.alpha == 0) {
 			return;
 		}
 
 		// transform within parent
-		const transform = with_transform.multiply(this);
+		const transform = withTransform.multiply(this);
 		if (transform.alpha < 0.001) {
 			return;
 		}
 
-		// TODO: if this.visibility_test, then check this test against screen bounds before continuing
+		// TODO: if this.visibilityTest, then check this test against screen bounds before continuing
 
-		if (this.is_frozen) {
+		if (this.isFrozen) {
 			ctx.save();
 			ctx.translate(transform.x, transform.y);
 			ctx.rotate(transform.rotation);
-			ctx.scale(transform.scale_x, transform.scale_y);
+			ctx.scale(transform.scaleX, transform.scaleY);
 			ctx.globalAlpha = transform.alpha;
-			ctx.drawImage(this.frozen_image_canvas, 0, 0, this.frozen_image_canvas.width, this.frozen_image_canvas.height,
-				this.frozen_bounds.x, this.frozen_bounds.y, this.frozen_bounds.width, this.frozen_bounds.height);
+			ctx.drawImage(this.frozenImageCanvas, 0, 0, this.frozenImageCanvas.width, this.frozenImageCanvas.height,
+				this.frozenBounds.x, this.frozenBounds.y, this.frozenBounds.width, this.frozenBounds.height);
 			ctx.restore();
 
 		} else {
-			if (this.content_render) {
-				this.content_render(ctx, transform);
+			if (this.contentRender) {
+				this.contentRender(ctx, transform);
 			}
 			if (this.children) {
 				for (const child of this.children) {
@@ -292,193 +292,193 @@ class display_list extends geometry.transform {
 		}
 	}
 
-	// TODO: set_visibilty_test_from_current_bounds()
+	// TODO: setVisibiltyTestFromCurrentBounds()
 	// create a visibilty test function based on the current content bounds of this display list, + optional padding
 
 	// -- override / customise for different display object types ------------
 
-	// display_list.update = function (delta) {} // update animations
-	// display_list.content_render = function (ctx, transform) {} // render actual content at this level with the given transform
+	// displayList.update = function (delta) {} // update animations
+	// displayList.contentRender = function (ctx, transform) {} // render actual content at this level with the given transform
 }
 
 // -- derived type rendering an image
 
-class image extends display_list {
+class Image extends DisplayList {
 
-	constructor (image_data_or_name, init_values) {
-		super(init_values);
-		this.set_image(image_data_or_name);
+	constructor (imageDataOrName, initValues) {
+		super(initValues);
+		this.setImage(imageDataOrName);
 	}
 
-	set_image (image_data_or_name) {
-		if (typeof image_data_or_name == 'string') {
-			this.image_data = resource.get_image_data(image_data_or_name);
-			if (!this.image_data) {
-				console.log('did not find image ' + image_data_or_name);
+	setImage (imageDataOrName) {
+		if (typeof imageDataOrName == 'string') {
+			this.imageData = resource.getImageData(imageDataOrName);
+			if (!this.imageData) {
+				console.log('did not find image ' + imageDataOrName);
 			}
 		} else {
-			this.image_data = image_data_or_name;
+			this.imageData = imageDataOrName;
 		}
 	}
 
-	content_render (ctx, transform) {
-		if (this.image_data) {
+	contentRender (ctx, transform) {
+		if (this.imageData) {
 			ctx.save();
 			ctx.translate(transform.x, transform.y);
 			ctx.rotate(transform.rotation);
-			ctx.scale(transform.scale_x, transform.scale_y);
+			ctx.scale(transform.scaleX, transform.scaleY);
 			ctx.globalAlpha = transform.alpha;
-			const src = this.image_data.source_rect;
-			const dst = this.image_data.dest_rect;
-			ctx.drawImage(this.image_data.texture, src.x, src.y, src.width, src.height, dst.x, dst.y, dst.width, dst.height);
+			const src = this.imageData.sourceRect;
+			const dst = this.imageData.destRect;
+			ctx.drawImage(this.imageData.texture, src.x, src.y, src.width, src.height, dst.x, dst.y, dst.width, dst.height);
 			ctx.restore();
 		}
 	}
 
-	content_bounds () {
-		return this.image_data.bounds();
+	contentBounds () {
+		return this.imageData.bounds();
 	}
 
 }
 
 // -- derived type rendering an image
 
-class clip extends display_list {
+class Clip extends DisplayList {
 
-	constructor (clip_data_or_name, init_values) {
-		super(init_values);
+	constructor (clipDataOrName, initValues) {
+		super(initValues);
 		this.children = [];
 
-		if (typeof clip_data_or_name == 'string') {
-			this.clip_data = resource.get_clip_data(clip_data_or_name);
+		if (typeof clipDataOrName == 'string') {
+			this.clipData = resource.getClipData(clipDataOrName);
 		} else {
-			this.clip_data = clip_data_or_name;
+			this.clipData = clipDataOrName;
 		}
 
-		this.playback_speed = 1;
-		this.playback_position = 1;
+		this.playbackSpeed = 1;
+		this.playbackPosition = 1;
 
-		this.is_playing = false;
-		this.start_frame = 1;
-		this.end_frame = this.clip_data.frames.length;
+		this.isPlaying = false;
+		this.startFrame = 1;
+		this.endFrame = this.clipData.frames.length;
 		this.loop = true;
 
-		this.current_frame = null;
-		this.set_frame(this.clip_data.frames[0]);
+		this.currentFrame = null;
+		this.setFrame(this.clipData.frames[0]);
 	}
 
 	stop () {
-		this.is_playing = false;
+		this.isPlaying = false;
 	}
 
 	play (arg1, arg2, arg3, arg4) {
-		this.is_playing = true;
-		this.on_complete = null;
+		this.isPlaying = true;
+		this.onComplete = null;
 
-		let label_was_set = false;
-		let loop_was_set = false;
-		let on_complete_was_set = false;
+		let labelWasSet = false;
+		let loopWasSet = false;
+		let onCompleteWasSet = false;
 
 		const args = [arg1, arg2, arg3, arg4];
 		for (let i = 0; i < args.length; i++) {
 			const arg = args[i];
 			if (typeof arg == 'boolean') {
-				loop_was_set = true;
+				loopWasSet = true;
 				this.loop = arg;
 			} else if (typeof arg == 'string') {
-				if (label_was_set) {
+				if (labelWasSet) {
 					throw 'only one label string argument is allowed';
 				} else {
-					if (!loop_was_set) {
+					if (!loopWasSet) {
 						this.loop = false;
 					}
-					const frames = this.clip_data.labels.get(arg);
+					const frames = this.clipData.labels.get(arg);
 					if (!frames) {
-						throw 'unknown label ' + arg + ' in clip ' + this.clip_data.name;
+						throw 'unknown label ' + arg + ' in clip ' + this.clipData.name;
 					}
-					this.start_frame = frames.start_frame;
-					this.end_frame = frames.end_frame;
-					this.playback_position = this.start_frame;
-					label_was_set = true;
+					this.startFrame = frames.startFrame;
+					this.endFrame = frames.endFrame;
+					this.playbackPosition = this.startFrame;
+					labelWasSet = true;
 				}
 			} else if (typeof arg == 'function') {
-				if (on_complete_was_set) {
-					throw 'only one on_complete function argument is allowed';
+				if (onCompleteWasSet) {
+					throw 'only one onComplete function argument is allowed';
 				}
-				if (!loop_was_set) {
+				if (!loopWasSet) {
 					this.loop = false;
 				}
-				this.on_complete = arg;
-				on_complete_was_set = true;
+				this.onComplete = arg;
+				onCompleteWasSet = true;
 			}
 
 		}
 		// -- check for start and end labels specified as numbers
 		if (typeof arg1 == 'number' && typeof arg2 == 'number') {
-			if (label_was_set) {
+			if (labelWasSet) {
 				throw 'cannot set a label and frame numbers';
 			}
-			this.start_frame = arg1;
-			this.end_frame = arg2;
+			this.startFrame = arg1;
+			this.endFrame = arg2;
 		}
 
-		if (this.loop && this.on_complete) {
+		if (this.loop && this.onComplete) {
 			throw 'on_complete will not be used with looping animation';
 		}
 	}
 
-	goto (label_or_number) {
-		if (typeof label_or_number == 'number') {
-			this.start_frame = label_or_number;
-			this.end_frame = label_or_number;
+	goto (labelOrNumber) {
+		if (typeof labelOrNumber == 'number') {
+			this.startFrame = labelOrNumber;
+			this.endFrame = labelOrNumber;
 		} else {
-			const frames = this.clip_data.labels.get(label_or_number);
+			const frames = this.clipData.labels.get(labelOrNumber);
 			if (!frames) {
-				throw 'unknown frame ' + label_or_number + ' in clip ' + this.clip_data.name;
+				throw 'unknown frame ' + labelOrNumber + ' in clip ' + this.clipData.name;
 			}
-			this.start_frame = frames.start_frame;
-			this.end_frame = frames.start_frame;
+			this.startFrame = frames.startFrame;
+			this.endFrame = frames.startFrame;
 		}
 
-		this.is_playing = false;
-		this.set_frame(this.clip_data.frames[this.start_frame - 1]);
+		this.isPlaying = false;
+		this.setFrame(this.clipData.frames[this.startFrame - 1]);
 	}
 
-	update (delta, add_oncomplete_callback) {
-		if (!this.is_playing) {
+	update (delta, addOncompleteCallback) {
+		if (!this.isPlaying) {
 			return;
 		}
 
-		this.playback_position += this.playback_speed;
-		if (Math.floor(this.playback_position) > this.end_frame) {
+		this.playbackPosition += this.playbackSpeed;
+		if (Math.floor(this.playbackPosition) > this.endFrame) {
 			if (this.loop) {
-				while (Math.floor(this.playback_position) > this.end_frame) {
-					this.playback_position -= (this.end_frame - this.start_frame) + 1;
+				while (Math.floor(this.playbackPosition) > this.endFrame) {
+					this.playbackPosition -= (this.endFrame - this.startFrame) + 1;
 				}
 			} else {
-				this.playback_position = this.end_frame;
-				this.is_playing = false;
+				this.playbackPosition = this.endFrame;
+				this.isPlaying = false;
 			}
 		}
 
-		const frame = this.clip_data.frames[Math.floor(this.playback_position) - 1];
-		if (frame != this.current_frame) {
-			this.set_frame(frame);
+		const frame = this.clipData.frames[Math.floor(this.playbackPosition) - 1];
+		if (frame != this.currentFrame) {
+			this.setFrame(frame);
 		}
 
-		if (!this.is_playing) {
-			if (this.on_complete) {
-				add_oncomplete_callback(this.on_complete);
-				this.on_complete = null;
+		if (!this.isPlaying) {
+			if (this.onComplete) {
+				addOncompleteCallback(this.onComplete);
+				this.onComplete = null;
 			}
 		}
 	}
 
-	set_frame (frame) {
+	setFrame (frame) {
 		if (!frame) {
 			throw 'setting invalid frame';
 		}
-		this.current_frame = frame;
+		this.currentFrame = frame;
 
 		// -- retain a list of current content (re-use objects where they match)
 		const current = new Map();
@@ -492,16 +492,16 @@ class clip extends display_list {
 
 		// -- recreate the child display list, re-using objects
 		for (const [index, content] of frame.content.entries()) {
-			let child = current.get(content.instance_name);
+			let child = current.get(content.instanceName);
 
 			// check if types match before re-using an existing
 			if (child) {
-				if (content.image_data) {
-					if (child.image_data != content.image_data) {
+				if (content.imageData) {
+					if (child.imageData != content.imageData) {
 						child = null;
 					}
-				} else if (content.clip_data) {
-					if (child.clip_data != content.clip_data) {
+				} else if (content.clipData) {
+					if (child.clipData != content.clipData) {
 						child = null;
 					}
 				}
@@ -512,35 +512,35 @@ class clip extends display_list {
 				// -- move it to the correct index
 				this.children[index] = child;
 				// -- make sure this is not removed later
-				current.delete(content.instance_name);
+				current.delete(content.instanceName);
 			} else {
 				// -- create a new child clip
-				if (content.image_data) {
-					child = new image(content.image_data);
-				} else if (content.clip_data) {
-					child = new clip(content.clip_data);
+				if (content.imageData) {
+					child = new Image(content.imageData);
+				} else if (content.clipData) {
+					child = new Clip(content.clipData);
 					// -- if frame is not specified then the sub clip should play
-					if (!content.frame_no) {
+					if (!content.frameNO) {
 						child.play();
 					}
 				} else {
 					// defaults to empty display list
-					child = new display_list();
+					child = new DisplayList();
 				}
-				child.name = content.instance_name;
+				child.name = content.instanceName;
 				child.parent = this;
 				this.children[index] = child;
 			}
 
-			// -- apply the new transform
+			// -- apply the new Transform
 			child.x = content.x;
 			child.y = content.y;
-			child.scale_x = content.scale_x;
-			child.scale_y = content.scale_y;
+			child.scaleX = content.scaleX;
+			child.scaleY = content.scaleY;
 			child.rotation = content.rotation;
 			child.alpha = content.alpha;
-			if (content.frame_no) {
-				child.goto_and_stop(content.frame_no);
+			if (content.frameNO) {
+				child.gotoAndStop(content.frameNO);
 			}
 		}
 
@@ -554,152 +554,152 @@ class clip extends display_list {
 
 // -- derived type rendering a rectangle
 
-class rect extends display_list {
+class Rect extends DisplayList {
 
-	constructor (width, height, color, init_values) {
-		super(init_values);
+	constructor (width, height, color, initValues) {
+		super(initValues);
 		this.width = width;
 		this.height = height;
 		this.color = color;
 	}
 
-	content_render (ctx, transform) {
+	contentRender (ctx, transform) {
 		ctx.save();
 		ctx.translate(transform.x, transform.y);
 		ctx.rotate(transform.rotation);
-		ctx.scale(transform.scale_x, transform.scale_y);
+		ctx.scale(transform.scaleX, transform.scaleY);
 		ctx.globalAlpha = this.color.alpha * transform.alpha;
-		ctx.fillStyle = this.color.fill_style();
+		ctx.fillStyle = this.color.fillStyle();
 		ctx.fillRect(0, 0, this.width, this.height);
 		ctx.restore();
 	}
 
-	content_bounds () {
+	contentBounds () {
 		return { x : 0, y : 0, width : this.width, height : this.height };
 	}
 
 }
 
-class circle extends display_list {
-	constructor (radius, color, init_values) {
-		super(init_values);
+class Circle extends DisplayList {
+	constructor (radius, color, initValues) {
+		super(initValues);
 		this.radius = radius;
 		this.color = color;
 	}
 
-	content_render (ctx, transform) {
+	contentRender (ctx, transform) {
 		ctx.save();
 		ctx.translate(transform.x, transform.y);
 		ctx.rotate(transform.rotation);
-		ctx.scale(transform.scale_x, transform.scale_y);
+		ctx.scale(transform.scaleX, transform.scaleY);
 		ctx.globalAlpha = this.color.alpha * transform.alpha;
-		ctx.fillStyle = this.color.fill_style();
+		ctx.fillStyle = this.color.fillStyle();
 		ctx.beginPath();
 		ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
 		ctx.fill();
 		ctx.restore();
 	}
 
-	content_bounds () {
+	contentBounds () {
 		return { x : -this.radius, y : -this.radius, width : this.radius * 2, height : this.radius * 2 };
 	}
 }
 
-class canvas extends display_list {
-	constructor (bounds, on_render, init_values) {
-		super(init_values);
+class Canvas extends DisplayList {
+	constructor (bounds, onRender, initValues) {
+		super(initValues);
 		this.bounds = bounds;
-		this.on_render = on_render;
+		this.onRender = onRender;
 	}
 
-	content_render (ctx, transform) {
+	contentRender (ctx, transform) {
 		ctx.save();
 		ctx.translate(transform.x, transform.y);
 		ctx.rotate(transform.rotation);
-		ctx.scale(transform.scale_x, transform.scale_y);
+		ctx.scale(transform.scaleX, transform.scaleY);
 		ctx.globalAlpha = this.color.alpha * transform.alpha;
-		this.on_render(ctx);
+		this.onRender(ctx);
 		ctx.restore();
 	}
 
-	content_bounds () {
+	contentBounds () {
 		return this.bounds;
 	}
 }
 
-class label extends display_list {
-	constructor (font, text, color, init_values) {
-		super(init_values);
+class Label extends DisplayList {
+	constructor (font, text, color, initValues) {
+		super(initValues);
 
-		// set word_wrap to a number to wrap lines at a maximum length
-		// this.word_wrap = undefined;
-		this.vertical_align = (this.vertical_align != null ? this.vertical_align : 'center');
+		// set wordWrap to a number to wrap lines at a maximum length
+		// this.wordWrap = undefined;
+		this.verticalAlign = (this.verticalAlign != null ? this.verticalAlign : 'center');
 
 		this.font = font;
 		this.text = text;
-		this.color = (color != undefined ? color : geometry.color.black);
+		this.color = (color != undefined ? color : geometry.Color.black);
 
-		this.last_break = null;
-		this.last_lines = null;
+		this.lastBreak = null;
+		this.lastLines = null;
 	}
 
-	content_render (ctx, transform) {
+	contentRender (ctx, transform) {
 		ctx.save();
 		ctx.translate(transform.x, transform.y);
 		ctx.rotate(transform.rotation);
-		ctx.scale(transform.scale_x, transform.scale_y);
+		ctx.scale(transform.scaleX, transform.scaleY);
 		ctx.globalAlpha = this.color.alpha * transform.alpha;
-		ctx.fillStyle = this.color.fill_style();
+		ctx.fillStyle = this.color.fillStyle();
 		this.font.set(ctx);
 
 		const tx = 0;
 		let ty = 0;
-		// adjust for vertical_align
-		if (this.vertical_align == 'center' || this.vertical_align == 'middle') {
+		// adjust for verticalAlign
+		if (this.verticalAlign == 'center' || this.verticalAlign == 'middle') {
 			// do nothing
-		} else if (this.vertical_align == 'top') {
-			ty += this.font.line_height * 0.5;
-		} else if (this.vertical_align == 'bottom') {
-			ty -= this.font.line_height * 0.5;
+		} else if (this.verticalAlign == 'top') {
+			ty += this.font.lineHeight * 0.5;
+		} else if (this.verticalAlign == 'bottom') {
+			ty -= this.font.lineHeight * 0.5;
 		}
 
-		if (this.word_wrap == undefined) {
+		if (this.wordWrap == undefined) {
 			ctx.fillText(this.text, tx, ty);
 		} else {
-			const this_break = this.word_wrap + ':' + this.text;
-			let lines = this.last_lines;
-			if (this_break != this.last_break) {
-				this.last_break = this_break;
-				lines = this.last_lines = this.font.breaklines(this.text, this.word_wrap);
+			const thisBreak = this.wordWrap + ':' + this.text;
+			let lines = this.lastLines;
+			if (thisBreak != this.lastBreak) {
+				this.lastBreak = thisBreak;
+				lines = this.lastLines = this.font.breaklines(this.text, this.wordWrap);
 			}
-			// adjust for vertical_align
-			if (this.vertical_align == 'center' || this.vertical_align == 'middle') {
-				ty -= (lines.length - 1) * 0.5 * this.font.line_height;
-			} else if (this.vertical_align == 'top') {
+			// adjust for verticalAlign
+			if (this.verticalAlign == 'center' || this.verticalAlign == 'middle') {
+				ty -= (lines.length - 1) * 0.5 * this.font.lineHeight;
+			} else if (this.verticalAlign == 'top') {
 				// do nothing
-			} else if (this.vertical_align == 'bottom') {
-				ty -= (lines.length - 1) * this.font.line_height;
+			} else if (this.verticalAlign == 'bottom') {
+				ty -= (lines.length - 1) * this.font.lineHeight;
 			}
 
 			for (const line of lines) {
 				ctx.fillText(line, tx, ty);
-				ty += this.font.line_height;
+				ty += this.font.lineHeight;
 			}
 		}
 		ctx.restore();
 	}
 
-	content_bounds () {
-		const font_bounds = this.font.measure(this.text, this.word_wrap);
-		const bounds = geometry.expanded_rect(font_bounds, font_bounds.padding, font_bounds.padding);
+	contentBounds () {
+		const fontBounds = this.font.measure(this.text, this.wordWrap);
+		const bounds = geometry.expandedRect(fontBounds, fontBounds.padding, fontBounds.padding);
 
-		// adjust for vertical_align
-		if (this.vertical_align == 'center' || this.vertical_align == 'middle') {
-			bounds.y -= (font_bounds.lines.length - 1) * 0.5 * font_bounds.line_height;
-		} else if (this.vertical_align == 'top') {
-			bounds.y += font_bounds.line_height * 0.5;
-		} else if (this.vertical_align == 'bottom') {
-			bounds.y -= (font_bounds.lines.length - 0.5) * font_bounds.line_height;
+		// adjust for verticalAlign
+		if (this.verticalAlign == 'center' || this.verticalAlign == 'middle') {
+			bounds.y -= (fontBounds.lines.length - 1) * 0.5 * fontBounds.lineHeight;
+		} else if (this.verticalAlign == 'top') {
+			bounds.y += fontBounds.lineHeight * 0.5;
+		} else if (this.verticalAlign == 'bottom') {
+			bounds.y -= (fontBounds.lines.length - 0.5) * fontBounds.lineHeight;
 		}
 
 		return bounds;
@@ -707,26 +707,26 @@ class label extends display_list {
 }
 
 // -- set up add methods from each class to each other class ----
-const class_list = {
-	'display_list' : display_list,
-	'image' : image,
-	'clip' : clip,
-	'rect' : rect,
-	'circle' : circle,
-	'canvas' : canvas,
-	'label' : label,
+const classList = {
+	'DisplayList' : DisplayList,
+	'Image' : Image,
+	'Clip' : Clip,
+	'Rect' : Rect,
+	'Circle' : Circle,
+	'Canvas' : Canvas,
+	'Label' : Label,
 };
 
-for (const this_class_name in class_list) {
-	const this_class = class_list[this_class_name];
-	for (const other_class_name in class_list) {
-		const other_class = class_list[other_class_name];
-		this_class.prototype['add_' + other_class_name] = function () {
-			const child = new other_class(...arguments);
+for (const thisClassName in classList) {
+	const thisClass = classList[thisClassName];
+	for (const otherClassName in classList) {
+		const otherClass = classList[otherClassName];
+		thisClass.prototype['add' + otherClassName] = function () {
+			const child = new otherClass(...arguments);
 			this.add(child);
 			return child;
 		};
 	}
 }
 
-export { display_list, image, clip, rect, circle, canvas, label, set_default_freeze_scale };
+export { DisplayList, Image, Clip, Rect, Circle, Canvas, Label, setDefaultFreezeScale };
